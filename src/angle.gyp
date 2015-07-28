@@ -9,7 +9,7 @@
         '../build/common.gypi',
         'compiler.gypi',
         'libGLESv2.gypi',
-        'libEGL.gypi'        
+        'libEGL.gypi'
     ],
 
     'variables':
@@ -27,7 +27,7 @@
         'angle_enable_gl%': 0,
         'angle_enable_hlsl%': 0,
         'angle_link_glx%': 0,
-        'angle_gl_library_type%': 'shared_library',
+        'angle_gl_library_type%': 'static_library',
         'conditions':
         [
             ['OS=="win"',
