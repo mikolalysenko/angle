@@ -8,6 +8,8 @@
 
 #include <cstdint>
 
+#include "mathutil.h"
+
 namespace gl
 {
 
@@ -2198,11 +2200,7 @@ const static unsigned g_offset[64] = {
 
 float float16ToFloat32(unsigned short h)
 {
-    union {
-      uint32_t i32;
-      float f32;
-    };
-    i32 = g_mantissa[g_offset[h >> 10] + (h & 0x3ff)] + g_exponent[h >> 10];
-    return f32;
+    uint32_t i32 = g_mantissa[g_offset[h >> 10] + (h & 0x3ff)] + g_exponent[h >> 10];
+    return gl::bitCast<float, uint32_t>(i32);
 }
 }

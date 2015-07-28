@@ -152,12 +152,7 @@ destType bitCast(const sourceType &source)
 
 inline unsigned short float32ToFloat16(float fp32)
 {
-    union {
-      uint32_t fp32i;
-      float fp32f;
-    };
-    fp32f = fp32;
-
+    uint32_t fp32i = bitCast<uint32_t, float>(fp32);
     unsigned int sign = (fp32i & 0x80000000) >> 16;
     unsigned int abs = fp32i & 0x7FFFFFFF;
 
