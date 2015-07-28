@@ -45,6 +45,9 @@ typedef const char *(*PFNGLXGETCLIENTSTRINGPROC) (Display *dpy, int name);
 // GLX 1.2
 typedef Display *(*PFNGLXGETCURRENTDISPLAYPROC) ();
 
+// GLX 1.3
+typedef GLXContext (*PFNGLXCREATENEWCONTEXTPROC)(Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct);
+
 }
 
 #endif // LIBANGLE_RENDERER_GL_GLX_FUNCTIONSGLXTYPEDEFS_H_

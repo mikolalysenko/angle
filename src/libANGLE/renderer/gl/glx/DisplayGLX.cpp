@@ -133,9 +133,8 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
     if(mGLX.hasExtension("GLX_ARB_create_context")) {
         mContext = mGLX.createContextAttribsARB(contextConfig, nullptr, True, nullptr);
     } else {
-        //If attribute lists aren't supported, then fall back to glxCreateContext
-        XVisualInfo *vis = mGLX.getVisualFromFBConfig(contextConfig);
-        mContext = mGLX.createContext(vis, nullptr, True);
+        //If attribute lists aren't supported, then fall back to glxCreateNewContext
+        mContext = mGLX.createNewContext(contextConfig, GLX_RGBA_TYPE, nullptr, True);
     }
     if (!mContext)
     {
