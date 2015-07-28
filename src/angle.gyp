@@ -3,6 +3,15 @@
 # found in the LICENSE file.
 
 {
+    'includes':
+    [
+        '../build/standalone.gypi',
+        '../build/common.gypi',
+        'compiler.gypi',
+        'libGLESv2.gypi',
+        'libEGL.gypi'        
+    ],
+
     'variables':
     {
         'angle_code': 1,
@@ -38,12 +47,7 @@
             }],
         ],
     },
-    'includes':
-    [
-        'compiler.gypi',
-        'libGLESv2.gypi',
-        'libEGL.gypi'
-    ],
+
 
     'targets':
     [
