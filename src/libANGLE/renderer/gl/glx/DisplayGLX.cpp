@@ -86,13 +86,6 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
         {
             return egl::Error(EGL_NOT_INITIALIZED, "GLX doesn't support ARB_multisample.");
         }
-        // Require ARB_create_context which has been supported since Mesa 9 unconditionnaly
-        // and is present in Mesa 8 in an almost always on compile flag. Also assume proprietary
-        // drivers have it.
-        if (!mGLX.hasExtension("GLX_ARB_create_context"))
-        {
-            return egl::Error(EGL_NOT_INITIALIZED, "GLX doesn't support ARB_create_context.");
-        }
     }
 
     glx::FBConfig contextConfig;
@@ -137,11 +130,18 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
         XFree(candidates);
     }
 
-    mContext = mGLX.createContextAttribsARB(contextConfig, nullptr, True, nullptr);
+    if(mGLX.hasExtension("GLX_ARB_create_context")) {
+        mContext = mGLX.createContextAttribsARB(contextConfig, nullptr, True, nullptr);
+    } else {
+        //If attribute lists aren't supported, then fall back to glxCreateContext
+        XVisualInfo *vis = mGLX.getVisualFromFBConfig(contextConfig);
+        mContext = mGLX.createContext(vis, nullptr, True);
+    }
     if (!mContext)
     {
         return egl::Error(EGL_NOT_INITIALIZED, "Could not create GL context.");
     }
+
 
     // FunctionsGL and DisplayGL need to make a few GL calls, for example to
     // query the version of the context so we need to make the context current.
@@ -150,7 +150,10 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
 
     // to query things like limits. Ideally we would want to unset the current context
     // and destroy the pbuffer before going back to the application but this is TODO
-    mDummyPbuffer = mGLX.createPbuffer(contextConfig, nullptr);
+
+    // GLX driver for Parallels VM crashes if attrib list ptr is null
+    int pbufferAttribs[] = { 0 };
+    mDummyPbuffer = mGLX.createPbuffer(contextConfig, pbufferAttribs);
     if (!mDummyPbuffer)
     {
         return egl::Error(EGL_NOT_INITIALIZED, "Could not create the dummy pbuffer.");
