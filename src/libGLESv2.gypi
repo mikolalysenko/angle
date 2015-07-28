@@ -772,6 +772,11 @@
             [
                 'LIBGLESV2_IMPLEMENTATION',
             ],
+            'include_dirs':
+            [
+                '.',
+                '../include'
+            ],
             'conditions':
             [
                 ['angle_build_winrt==1',
