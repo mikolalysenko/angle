@@ -37,7 +37,6 @@ class FunctionsGLX
     PFNGETPROCPROC getProc;
 
     // GLX 1.0
-    glx::Context createContext(XVisualInfo* vis, glx::Context share, bool direct) const;
     void destroyContext(glx::Context context) const;
     Bool makeCurrent(glx::Drawable drawable, glx::Context context) const;
     void swapBuffers(glx::Drawable drawable) const;
@@ -50,6 +49,7 @@ class FunctionsGLX
     const char *queryExtensionsString() const;
 
     // GLX 1.3
+    glx::Context createNewContext(glx::FBConfig config, int renderType, glx::Context shareContext, bool direct) const;
     glx::FBConfig *getFBConfigs(int *nElements) const;
     glx::FBConfig *chooseFBConfig(const int *attribList, int *nElements) const;
     int getFBConfigAttrib(glx::FBConfig config, int attribute, int *value) const;
