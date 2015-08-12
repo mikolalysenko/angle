@@ -321,7 +321,7 @@ SurfaceImpl *DisplayWGL::createWindowSurface(const egl::Config *configuration,
                                              EGLNativeWindowType window,
                                              const egl::AttributeMap &attribs)
 {
-    return new WindowSurfaceWGL(window, mPixelFormat, mWGLContext, mFunctionsWGL);
+    return new WindowSurfaceWGL(this->getRenderer(), window, mPixelFormat, mWGLContext, mFunctionsWGL);
 }
 
 SurfaceImpl *DisplayWGL::createPbufferSurface(const egl::Config *configuration,
@@ -333,7 +333,7 @@ SurfaceImpl *DisplayWGL::createPbufferSurface(const egl::Config *configuration,
     EGLenum textureFormat = attribs.get(EGL_TEXTURE_FORMAT, EGL_NO_TEXTURE);
     EGLenum textureTarget = attribs.get(EGL_TEXTURE_TARGET, EGL_NO_TEXTURE);
 
-    return new PbufferSurfaceWGL(width, height, textureFormat, textureTarget, largest,
+    return new PbufferSurfaceWGL(this->getRenderer(), width, height, textureFormat, textureTarget, largest,
                                  mPixelFormat, mDeviceContext, mWGLContext, mFunctionsWGL);
 }
 

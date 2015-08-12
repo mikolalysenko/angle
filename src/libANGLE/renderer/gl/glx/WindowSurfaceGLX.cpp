@@ -16,14 +16,14 @@
 namespace rx
 {
 
-WindowSurfaceGLX::WindowSurfaceGLX(const FunctionsGLX &glx, const DisplayGLX &glxDisplay, Window window, Display *display,
+WindowSurfaceGLX::WindowSurfaceGLX(const FunctionsGLX &glx, DisplayGLX *glxDisplay, RendererGL *renderer, Window window, Display *display,
                                    glx::Context context, glx::FBConfig fbConfig)
-    : SurfaceGL(),
+    : SurfaceGL(renderer),
       mParent(window),
       mWindow(0),
       mDisplay(display),
       mGLX(glx),
-      mGLXDisplay(glxDisplay),
+      mGLXDisplay(*glxDisplay),
       mContext(context),
       mFBConfig(fbConfig),
       mGLXWindow(0),

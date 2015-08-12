@@ -8,16 +8,25 @@
 
 #include "libANGLE/renderer/gl/SurfaceGL.h"
 
+#include "libANGLE/renderer/gl/FramebufferGL.h"
+#include "libANGLE/renderer/gl/RendererGL.h"
+
 namespace rx
 {
 
-SurfaceGL::SurfaceGL()
-    : SurfaceImpl()
+SurfaceGL::SurfaceGL(RendererGL *renderer)
+    : SurfaceImpl(),
+      mRenderer(renderer)
 {
 }
 
 SurfaceGL::~SurfaceGL()
 {
+}
+
+FramebufferImpl *SurfaceGL::createDefaultFramebuffer(const gl::Framebuffer::Data &data)
+{
+    return new FramebufferGL(data, mRenderer->getFunctions(), mRenderer->getStateManager(), true);
 }
 
 }

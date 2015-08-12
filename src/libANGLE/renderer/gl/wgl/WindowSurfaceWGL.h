@@ -21,7 +21,7 @@ class FunctionsWGL;
 class WindowSurfaceWGL : public SurfaceGL
 {
   public:
-    WindowSurfaceWGL(EGLNativeWindowType window, int pixelFormat, HGLRC wglContext, const FunctionsWGL *functions);
+    WindowSurfaceWGL(RendererGL *renderer, EGLNativeWindowType window, int pixelFormat, HGLRC wglContext, const FunctionsWGL *functions);
     ~WindowSurfaceWGL() override;
 
     egl::Error initialize() override;
