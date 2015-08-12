@@ -27,26 +27,23 @@ namespace rx
 namespace
 {
 
-void GetInputLayout(const TranslatedAttribute *translatedAttributes[gl::MAX_VERTEX_ATTRIBS],
-                    size_t attributeCount,
-                    gl::InputLayout *inputLayout)
+gl::InputLayout GetInputLayout(
+    const TranslatedAttribute *translatedAttributes[gl::MAX_VERTEX_ATTRIBS],
+    size_t attributeCount)
 {
+    gl::InputLayout inputLayout(attributeCount, gl::VERTEX_FORMAT_INVALID);
+
     for (size_t attributeIndex = 0; attributeIndex < attributeCount; ++attributeIndex)
     {
         const TranslatedAttribute *translatedAttribute = translatedAttributes[attributeIndex];
 
         if (translatedAttribute->active)
         {
-            gl::VertexFormatType vertexFormatType =
-                gl::GetVertexFormatType(*translatedAttribute->attribute,
-                translatedAttribute->currentValueType);
-            inputLayout->push_back(vertexFormatType);
-        }
-        else
-        {
-            inputLayout->push_back(gl::VERTEX_FORMAT_INVALID);
+            inputLayout[attributeIndex] = gl::GetVertexFormatType(
+                *translatedAttribute->attribute, translatedAttribute->currentValueType);
         }
     }
+    return inputLayout;
 }
 
 GLenum GetNextGLSLAttributeType(const sh::Attribute *linkedAttributes, int index)
@@ -327,8 +324,8 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
     }
     else
     {
-        gl::InputLayout shaderInputLayout;
-        GetInputLayout(sortedAttributes, unsortedAttributes.size(), &shaderInputLayout);
+        const gl::InputLayout &shaderInputLayout =
+            GetInputLayout(sortedAttributes, unsortedAttributes.size());
 
         ShaderExecutableD3D *shader = nullptr;
         gl::Error error = programD3D->getVertexExecutableForInputLayout(shaderInputLayout, &shader, nullptr);
@@ -380,8 +377,8 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
     }
 
     bool dirtyBuffers = false;
-    size_t minDiff = gl::MAX_VERTEX_ATTRIBS;
-    size_t maxDiff = 0;
+    unsigned int minDiff            = gl::MAX_VERTEX_ATTRIBS;
+    unsigned int maxDiff            = 0;
     unsigned int nextAvailableIndex = 0;
 
     for (unsigned int i = 0; i < gl::MAX_VERTEX_ATTRIBS; i++)
@@ -435,8 +432,8 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
             vertexOffset != mCurrentVertexOffsets[i])
         {
             dirtyBuffers = true;
-            minDiff = std::min(minDiff, static_cast<size_t>(i));
-            maxDiff = std::max(maxDiff, static_cast<size_t>(i));
+            minDiff      = std::min(minDiff, i);
+            maxDiff      = std::max(maxDiff, i);
 
             mCurrentBuffers[i] = buffer;
             mCurrentVertexStrides[i] = vertexStride;

@@ -16,6 +16,7 @@
 #include "libANGLE/renderer/Renderer.h"
 #include "libANGLE/renderer/d3d/VertexDataManager.h"
 #include "libANGLE/renderer/d3d/formatutilsD3D.h"
+#include "libANGLE/renderer/d3d/WorkaroundsD3D.h"
 #include "libANGLE/renderer/d3d/d3d11/NativeWindow.h"
 
 //FIXME(jmadill): std::array is currently prohibited by Chromium style guide
@@ -148,9 +149,12 @@ class RendererD3D : public Renderer, public BufferFactoryD3D
     virtual unsigned int getReservedVertexUniformBuffers() const = 0;
     virtual unsigned int getReservedFragmentUniformBuffers() const = 0;
     virtual bool getShareHandleSupport() const = 0;
+    virtual bool getKeyedMutexSupport() const = 0;
     virtual bool getPostSubBufferSupport() const = 0;
 
     virtual int getMajorShaderModel() const = 0;
+
+    const WorkaroundsD3D &getWorkarounds() const;
 
     // Pixel operations
     virtual gl::Error copyImage2D(const gl::Framebuffer *framebuffer, const gl::Rectangle &sourceRect, GLenum destFormat,
@@ -189,6 +193,11 @@ class RendererD3D : public Renderer, public BufferFactoryD3D
     virtual bool supportsFastCopyBufferToTexture(GLenum internalFormat) const = 0;
     virtual gl::Error fastCopyBufferToTexture(const gl::PixelUnpackState &unpack, unsigned int offset, RenderTargetD3D *destRenderTarget,
                                               GLenum destinationFormat, GLenum sourcePixelsType, const gl::Box &destArea) = 0;
+
+    void syncState(const gl::State & /*state*/, const gl::State::DirtyBits &bitmask) override
+    {
+        // TODO(jmadill): implement state sync for D3D renderers;
+    }
 
     // Device lost
     void notifyDeviceLost() override;
@@ -251,9 +260,14 @@ class RendererD3D : public Renderer, public BufferFactoryD3D
 
     gl::DebugAnnotator *getAnnotator();
 
+    virtual WorkaroundsD3D generateWorkarounds() const = 0;
+
     gl::TextureMap mIncompleteTextures;
     MemoryBuffer mScratchMemoryBuffer;
     unsigned int mScratchMemoryBufferResetCounter;
+
+    mutable bool mWorkaroundsInitialized;
+    mutable WorkaroundsD3D mWorkarounds;
 };
 
 struct dx_VertexConstants

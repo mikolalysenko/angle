@@ -87,6 +87,7 @@ RendererGL::RendererGL(const FunctionsGL *functions, const egl::AttributeMap &at
 {
     ASSERT(mFunctions);
     mStateManager = new StateManagerGL(mFunctions, getRendererCaps());
+    nativegl_gl::GenerateWorkarounds(mFunctions, &mWorkarounds);
 
 #ifndef NDEBUG
     if (mFunctions->debugMessageControl && mFunctions->debugMessageCallback)
@@ -192,12 +193,12 @@ FramebufferImpl *RendererGL::createFramebuffer(const gl::Framebuffer::Data &data
 
 TextureImpl *RendererGL::createTexture(GLenum target)
 {
-    return new TextureGL(target, mFunctions, mStateManager);
+    return new TextureGL(target, mFunctions, mWorkarounds, mStateManager);
 }
 
 RenderbufferImpl *RendererGL::createRenderbuffer()
 {
-    return new RenderbufferGL(mFunctions, mStateManager, getRendererTextureCaps());
+    return new RenderbufferGL(mFunctions, mWorkarounds, mStateManager, getRendererTextureCaps());
 }
 
 BufferImpl *RendererGL::createBuffer()
@@ -323,10 +324,8 @@ void RendererGL::generateCaps(gl::Caps *outCaps, gl::TextureCapsMap* outTextureC
     nativegl_gl::GenerateCaps(mFunctions, outCaps, outTextureCaps, outExtensions, &mMaxSupportedESVersion);
 }
 
-Workarounds RendererGL::generateWorkarounds() const
+void RendererGL::syncState(const gl::State &state, const gl::State::DirtyBits &dirtyBits)
 {
-    Workarounds workarounds;
-    return workarounds;
+    mStateManager->syncState(state, dirtyBits);
 }
-
 }

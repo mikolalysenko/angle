@@ -17,8 +17,8 @@
 #include "libANGLE/Constants.h"
 #include "libANGLE/formatutils.h"
 #include "libANGLE/renderer/ProgramImpl.h"
-#include "libANGLE/renderer/Workarounds.h"
 #include "libANGLE/renderer/d3d/DynamicHLSL.h"
+#include "libANGLE/renderer/d3d/WorkaroundsD3D.h"
 
 namespace gl
 {
@@ -137,7 +137,7 @@ class ProgramD3D : public ProgramImpl
     class VertexExecutable
     {
       public:
-        typedef std::vector<GLenum> Signature;
+        typedef std::vector<bool> Signature;
 
         VertexExecutable(const gl::InputLayout &inputLayout,
                          const Signature &signature,

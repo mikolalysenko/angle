@@ -155,7 +155,7 @@ class TIntermLoop : public TIntermNode
           mUnrollFlag(false) { }
 
     virtual TIntermLoop *getAsLoopNode() { return this; }
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
 
@@ -188,7 +188,7 @@ class TIntermBranch : public TIntermNode
         : mFlowOp(op),
           mExpression(e) { }
 
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
 
@@ -227,7 +227,7 @@ class TIntermSymbol : public TIntermTyped
     bool isInternal() const { return mInternal; }
     void setInternal(bool isInternal) { mInternal = isInternal; }
 
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual TIntermSymbol *getAsSymbolNode() { return this; }
     virtual bool replaceChildNode(TIntermNode *, TIntermNode *) { return false; }
 
@@ -251,7 +251,7 @@ class TIntermRaw : public TIntermTyped
 
     TString getRawText() const { return mRawText; }
 
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
 
     virtual TIntermRaw *getAsRawNode() { return this; }
     virtual bool replaceChildNode(TIntermNode *, TIntermNode *) { return false; }
@@ -296,7 +296,7 @@ class TIntermConstantUnion : public TIntermTyped
     }
 
     virtual TIntermConstantUnion *getAsConstantUnion()  { return this; }
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(TIntermNode *, TIntermNode *) { return false; }
 
     TConstantUnion *foldBinary(TOperator op, TIntermConstantUnion *rightNode, TInfoSink &infoSink);
@@ -350,7 +350,7 @@ class TIntermBinary : public TIntermOperator
           mAddIndexClamp(false) {}
 
     virtual TIntermBinary *getAsBinaryNode() { return this; }
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
 
@@ -392,7 +392,7 @@ class TIntermUnary : public TIntermOperator
           mOperand(NULL),
           mUseEmulatedFunction(false) {}
 
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual TIntermUnary *getAsUnaryNode() { return this; }
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
@@ -443,7 +443,7 @@ class TIntermAggregate : public TIntermOperator
     ~TIntermAggregate() { }
 
     virtual TIntermAggregate *getAsAggregate() { return this; }
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
     bool replaceChildNodeWithMultiple(TIntermNode *original, TIntermSequence replacements);
@@ -513,7 +513,7 @@ class TIntermSelection : public TIntermTyped
           mTrueBlock(trueB),
           mFalseBlock(falseB) {}
 
-    virtual void traverse(TIntermTraverser *);
+    void traverse(TIntermTraverser *it) override;
     virtual bool replaceChildNode(
         TIntermNode *original, TIntermNode *replacement);
 
@@ -551,6 +551,7 @@ class TIntermSwitch : public TIntermNode
 
     TIntermSwitch *getAsSwitchNode() override { return this; }
 
+    TIntermTyped *getInit() { return mInit; }
     TIntermAggregate *getStatementList() { return mStatementList; }
     void setStatementList(TIntermAggregate *statementList) { mStatementList = statementList; }
 
@@ -592,9 +593,12 @@ enum Visit
 };
 
 //
-// For traversing the tree.  User should derive from this,
-// put their traversal specific data in it, and then pass
-// it to a Traverse method.
+// For traversing the tree.  User should derive from this class overriding the visit functions,
+// and then pass an object of the subclass to a traverse method of a node.
+//
+// The traverse*() functions may also be overridden do other bookkeeping on the tree to provide
+// contextual information to the visit functions, such as whether the node is the target of an
+// assignment.
 //
 // When using this, just fill in the methods for nodes you want visited.
 // Return false from a pre-visit to skip visiting that node's subtree.
@@ -609,25 +613,55 @@ class TIntermTraverser : angle::NonCopyable
           postVisit(postVisit),
           mDepth(0),
           mMaxDepth(0),
-          mTemporaryIndex(nullptr)
+          mTemporaryIndex(nullptr),
+          mOperatorRequiresLValue(false),
+          mInFunctionCallOutParameter(false)
     {
     }
     virtual ~TIntermTraverser() {}
 
-    virtual void visitSymbol(TIntermSymbol *) {}
-    virtual void visitRaw(TIntermRaw *) {}
-    virtual void visitConstantUnion(TIntermConstantUnion *) {}
-    virtual bool visitBinary(Visit, TIntermBinary *) { return true; }
-    virtual bool visitUnary(Visit, TIntermUnary *) { return true; }
-    virtual bool visitSelection(Visit, TIntermSelection *) { return true; }
-    virtual bool visitSwitch(Visit, TIntermSwitch *) { return true; }
-    virtual bool visitCase(Visit, TIntermCase *) { return true; }
-    virtual bool visitAggregate(Visit, TIntermAggregate *) { return true; }
-    virtual bool visitLoop(Visit, TIntermLoop *) { return true; }
-    virtual bool visitBranch(Visit, TIntermBranch *) { return true; }
+    virtual void visitSymbol(TIntermSymbol *node) {}
+    virtual void visitRaw(TIntermRaw *node) {}
+    virtual void visitConstantUnion(TIntermConstantUnion *node) {}
+    virtual bool visitBinary(Visit visit, TIntermBinary *node) { return true; }
+    virtual bool visitUnary(Visit visit, TIntermUnary *node) { return true; }
+    virtual bool visitSelection(Visit visit, TIntermSelection *node) { return true; }
+    virtual bool visitSwitch(Visit visit, TIntermSwitch *node) { return true; }
+    virtual bool visitCase(Visit visit, TIntermCase *node) { return true; }
+    virtual bool visitAggregate(Visit visit, TIntermAggregate *node) { return true; }
+    virtual bool visitLoop(Visit visit, TIntermLoop *node) { return true; }
+    virtual bool visitBranch(Visit visit, TIntermBranch *node) { return true; }
+
+    // The traverse functions contain logic for iterating over the children of the node
+    // and calling the visit functions in the appropriate places. They also track some
+    // context that may be used by the visit functions.
+    virtual void traverseSymbol(TIntermSymbol *node);
+    virtual void traverseRaw(TIntermRaw *node);
+    virtual void traverseConstantUnion(TIntermConstantUnion *node);
+    virtual void traverseBinary(TIntermBinary *node);
+    virtual void traverseUnary(TIntermUnary *node);
+    virtual void traverseSelection(TIntermSelection *node);
+    virtual void traverseSwitch(TIntermSwitch *node);
+    virtual void traverseCase(TIntermCase *node);
+    virtual void traverseAggregate(TIntermAggregate *node);
+    virtual void traverseLoop(TIntermLoop *node);
+    virtual void traverseBranch(TIntermBranch *node);
 
     int getMaxDepth() const { return mMaxDepth; }
 
+    // Return the original name if hash function pointer is NULL;
+    // otherwise return the hashed name.
+    static TString hash(const TString &name, ShHashFunction64 hashFunction);
+
+    // If traversers need to replace nodes, they can add the replacements in
+    // mReplacements/mMultiReplacements during traversal and the user of the traverser should call
+    // this function after traversal to perform them.
+    void updateTree();
+
+    // Start creating temporary symbols from the given temporary symbol index + 1.
+    void useTemporaryIndex(unsigned int *temporaryIndex);
+
+  protected:
     void incrementDepth(TIntermNode *current)
     {
         mDepth++;
@@ -655,23 +689,40 @@ class TIntermTraverser : angle::NonCopyable
         return !mParentBlockStack.empty() && getParentNode() == mParentBlockStack.back().node;
     }
 
-    // Return the original name if hash function pointer is NULL;
-    // otherwise return the hashed name.
-    static TString hash(const TString& name, ShHashFunction64 hashFunction);
-
     const bool preVisit;
     const bool inVisit;
     const bool postVisit;
 
-    // If traversers need to replace nodes, they can add the replacements in
-    // mReplacements/mMultiReplacements during traversal and the user of the traverser should call
-    // this function after traversal to perform them.
-    void updateTree();
+    // Track whether an l-value is required in the node that is currently being traversed.
+    // These functions are intended to be called only from traversal functions, not from subclasses
+    // of TIntermTraverser.
+    // Use isLValueRequiredHere instead to check all conditions which require an l-value.
+    void setOperatorRequiresLValue(bool lValueRequired)
+    {
+        mOperatorRequiresLValue = lValueRequired;
+    }
+    bool operatorRequiresLValue() const { return mOperatorRequiresLValue; }
 
-    // Start creating temporary symbols from the given temporary symbol index + 1.
-    void useTemporaryIndex(unsigned int *temporaryIndex);
+    // Add a function encountered during traversal to the function map. Intended to be called only
+    // from traversal functions, not from subclasses of TIntermTraverser.
+    void addToFunctionMap(const TString &name, TIntermSequence *paramSequence);
 
-  protected:
+    // Return true if the prototype or definition of the function being called has been encountered
+    // during traversal.
+    bool isInFunctionMap(const TIntermAggregate *callNode) const;
+    // Return the parameters sequence from the function definition or prototype.
+    TIntermSequence *getFunctionParameters(const TIntermAggregate *callNode);
+
+    // Track whether an l-value is required inside a function call.
+    // These functions are intended to be called only from traversal functions, not from traverers.
+    void setInFunctionCallOutParameter(bool inOutParameter);
+    bool isInFunctionCallOutParameter() const;
+
+    bool isLValueRequiredHere() const
+    {
+        return mOperatorRequiresLValue || mInFunctionCallOutParameter;
+    }
+
     int mDepth;
     int mMaxDepth;
 
@@ -771,6 +822,17 @@ class TIntermTraverser : angle::NonCopyable
     std::vector<ParentBlock> mParentBlockStack;
 
     unsigned int *mTemporaryIndex;
+
+    bool mOperatorRequiresLValue;
+    bool mInFunctionCallOutParameter;
+
+    struct TStringComparator
+    {
+        bool operator()(const TString &a, const TString &b) const { return a.compare(b) < 0; }
+    };
+
+    // Map from mangled function names to their parameter sequences
+    TMap<TString, TIntermSequence *, TStringComparator> mFunctionMap;
 };
 
 //

@@ -414,7 +414,8 @@ std::string DynamicHLSL::generateVertexShaderForInputLayout(const std::string &s
         if (!shaderAttribute.name.empty())
         {
             ASSERT(inputIndex < MAX_VERTEX_ATTRIBS);
-            VertexFormatType vertexFormatType = inputLayout[inputIndex];
+            VertexFormatType vertexFormatType =
+                inputIndex < inputLayout.size() ? inputLayout[inputIndex] : VERTEX_FORMAT_INVALID;
 
             // HLSL code for input structure
             if (IsMatrixType(shaderAttribute.type))
@@ -516,8 +517,9 @@ std::string DynamicHLSL::generatePixelShaderForOutputSignature(const std::string
             // corresponding to unwritten variables are similarly undefined.
             if (outputVariable)
             {
-                declarationHLSL += "    " + HLSLTypeString(outputVariable->type) + " " + outputVariable->name +
-                                   " : " + targetSemantic + Str(layoutIndex) + ";\n";
+                declarationHLSL += "    " + HLSLTypeString(outputVariable->type) + " " +
+                                   outputVariable->name + " : " + targetSemantic +
+                                   Str(static_cast<int>(layoutIndex)) + ";\n";
 
                 copyHLSL += "    output." + outputVariable->name + " = " + outputVariable->source + ";\n";
             }

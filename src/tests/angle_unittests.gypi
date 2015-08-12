@@ -15,6 +15,7 @@
         # This file list will be shared with the GN build.
         'angle_unittests_sources':
         [
+            '<(angle_path)/src/common/BitSetIterator_unittest.cpp',
             '<(angle_path)/src/common/Optional_unittest.cpp',
             '<(angle_path)/src/common/mathutil_unittest.cpp',
             '<(angle_path)/src/common/matrix_utils_unittest.cpp',
@@ -23,6 +24,7 @@
             '<(angle_path)/src/libANGLE/Config_unittest.cpp',
             '<(angle_path)/src/libANGLE/Fence_unittest.cpp',
             '<(angle_path)/src/libANGLE/HandleAllocator_unittest.cpp',
+            '<(angle_path)/src/libANGLE/Image_unittest.cpp',
             '<(angle_path)/src/libANGLE/ImageIndexIterator_unittest.cpp',
             '<(angle_path)/src/libANGLE/Program_unittest.cpp',
             '<(angle_path)/src/libANGLE/ResourceManager_unittest.cpp',
@@ -30,6 +32,7 @@
             '<(angle_path)/src/libANGLE/TransformFeedback_unittest.cpp',
             '<(angle_path)/src/libANGLE/renderer/BufferImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/RenderbufferImpl_mock.h',
+            '<(angle_path)/src/libANGLE/renderer/ImageImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/TextureImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/TransformFeedbackImpl_mock.h',
             '<(angle_path)/src/tests/angle_unittests_utils.h',
@@ -39,7 +42,7 @@
             '<(angle_path)/src/tests/compiler_tests/ConstantFolding_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/DebugShaderPrecision_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/ExpressionLimit_test.cpp',
-            '<(angle_path)/src/tests/compiler_tests/FragDepth_test.cpp',
+            '<(angle_path)/src/tests/compiler_tests/EXT_blend_func_extended_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/MalformedShader_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/NV_draw_buffers_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/Pack_Unpack_test.cpp',

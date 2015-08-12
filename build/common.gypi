@@ -19,7 +19,7 @@
         [
             '-Wall',
             '-Wchar-subscripts',
-            '-Werror',
+            #'-Werror',
             '-Wextra',
             '-Wformat=2',
             '-Winit-self',
@@ -336,6 +336,19 @@
                     '-std=c++0x',
                 ],
             },
+        }],
+        ['OS == "mac"',
+        {
+            'target_defaults': {
+                'xcode_settings': {
+                    'MACOSX_DEPLOYMENT_TARGET': '10.7',
+                    'OTHER_CFLAGS': [
+                      '-std=c++11',
+                      '-stdlib=libc++',
+                      '-mmacosx-version-min=10.7',
+                    ],
+                },
+            }
         }],
         ['OS != "win" and OS != "mac"',
         {

@@ -10,10 +10,12 @@
 #include "libANGLE/validationES2.h"
 #include "libANGLE/validationES3.h"
 #include "libANGLE/Context.h"
+#include "libANGLE/Display.h"
 #include "libANGLE/Texture.h"
 #include "libANGLE/Framebuffer.h"
 #include "libANGLE/FramebufferAttachment.h"
 #include "libANGLE/formatutils.h"
+#include "libANGLE/Image.h"
 #include "libANGLE/Query.h"
 #include "libANGLE/Program.h"
 #include "libANGLE/Uniform.h"
@@ -240,7 +242,7 @@ bool ValidMipLevel(const Context *context, GLenum target, GLint level)
       default: UNREACHABLE();
     }
 
-    return level <= gl::log2(maxDimension);
+    return level <= gl::log2(static_cast<int>(maxDimension));
 }
 
 bool ValidImageSize(const Context *context, GLenum target, GLint level,
@@ -1126,7 +1128,7 @@ static bool ValidateUniformCommonBase(gl::Context *context, GLenum targetUniform
     LinkedUniform *uniform = program->getUniformByLocation(location);
 
     // attempting to write an array to a non-array uniform is an INVALID_OPERATION
-    if (uniform->elementCount() == 1 && count > 1)
+    if (!uniform->isArray() && count > 1)
     {
         context->recordError(Error(GL_INVALID_OPERATION));
         return false;
@@ -2006,7 +2008,43 @@ bool ValidateEGLImageTargetTexture2DOES(Context *context,
                                         GLenum target,
                                         egl::Image *image)
 {
-    UNIMPLEMENTED();
+    if (!context->getExtensions().eglImage && !context->getExtensions().eglImageExternal)
+    {
+        context->recordError(Error(GL_INVALID_OPERATION));
+        return false;
+    }
+
+    switch (target)
+    {
+        case GL_TEXTURE_2D:
+            break;
+
+        default:
+            context->recordError(Error(GL_INVALID_ENUM, "invalid texture target."));
+            return false;
+    }
+
+    if (!display->isValidImage(image))
+    {
+        context->recordError(Error(GL_INVALID_VALUE, "EGL image is not valid."));
+        return false;
+    }
+
+    if (image->getSamples() > 0)
+    {
+        context->recordError(Error(GL_INVALID_OPERATION,
+                                   "cannot create a 2D texture from a multisampled EGL image."));
+        return false;
+    }
+
+    const TextureCaps &textureCaps = context->getTextureCaps().get(image->getInternalFormat());
+    if (!textureCaps.texturable)
+    {
+        context->recordError(Error(GL_INVALID_OPERATION,
+                                   "EGL image internal format is not supported as a texture."));
+        return false;
+    }
+
     return true;
 }
 
@@ -2015,7 +2053,36 @@ bool ValidateEGLImageTargetRenderbufferStorageOES(Context *context,
                                                   GLenum target,
                                                   egl::Image *image)
 {
-    UNIMPLEMENTED();
+    if (!context->getExtensions().eglImage)
+    {
+        context->recordError(Error(GL_INVALID_OPERATION));
+        return false;
+    }
+
+    switch (target)
+    {
+        case GL_RENDERBUFFER:
+            break;
+
+        default:
+            context->recordError(Error(GL_INVALID_ENUM, "invalid renderbuffer target."));
+            return false;
+    }
+
+    if (!display->isValidImage(image))
+    {
+        context->recordError(Error(GL_INVALID_VALUE, "EGL image is not valid."));
+        return false;
+    }
+
+    const TextureCaps &textureCaps = context->getTextureCaps().get(image->getInternalFormat());
+    if (!textureCaps.renderable)
+    {
+        context->recordError(Error(
+            GL_INVALID_OPERATION, "EGL image internal format is not supported as a renderbuffer."));
+        return false;
+    }
+
     return true;
 }
 }

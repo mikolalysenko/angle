@@ -8,6 +8,7 @@
         # These file lists are shared with the GN build.
         'libangle_common_sources':
         [
+            'common/BitSetIterator.h',
             'common/Float16ToFloat32.cpp',
             'common/MemoryBuffer.cpp',
             'common/MemoryBuffer.h',
@@ -81,6 +82,8 @@
             'libANGLE/FramebufferAttachment.h',
             'libANGLE/HandleAllocator.cpp',
             'libANGLE/HandleAllocator.h',
+            'libANGLE/Image.h',
+            'libANGLE/Image.cpp',
             'libANGLE/ImageIndex.h',
             'libANGLE/ImageIndex.cpp',
             'libANGLE/IndexRangeCache.cpp',
@@ -135,6 +138,7 @@
             'libANGLE/renderer/FenceNVImpl.h',
             'libANGLE/renderer/FenceSyncImpl.h',
             'libANGLE/renderer/FramebufferImpl.h',
+            'libANGLE/renderer/ImageImpl.h',
             'libANGLE/renderer/ImplFactory.h',
             'libANGLE/renderer/ProgramImpl.cpp',
             'libANGLE/renderer/ProgramImpl.h',
@@ -148,7 +152,6 @@
             'libANGLE/renderer/TextureImpl.h',
             'libANGLE/renderer/TransformFeedbackImpl.h',
             'libANGLE/renderer/VertexArrayImpl.h',
-            'libANGLE/renderer/Workarounds.h',
             'libANGLE/validationEGL.cpp',
             'libANGLE/validationEGL.h',
             'libANGLE/validationES.cpp',
@@ -218,6 +221,7 @@
             'libANGLE/renderer/d3d/VertexBuffer.h',
             'libANGLE/renderer/d3d/VertexDataManager.cpp',
             'libANGLE/renderer/d3d/VertexDataManager.h',
+            'libANGLE/renderer/d3d/WorkaroundsD3D.h',
         ],
         'libangle_d3d9_sources':
         [
@@ -418,6 +422,7 @@
             'libANGLE/renderer/gl/TransformFeedbackGL.h',
             'libANGLE/renderer/gl/VertexArrayGL.cpp',
             'libANGLE/renderer/gl/VertexArrayGL.h',
+            'libANGLE/renderer/gl/WorkaroundsGL.h',
             'libANGLE/renderer/gl/formatutilsgl.cpp',
             'libANGLE/renderer/gl/formatutilsgl.h',
             'libANGLE/renderer/gl/functionsgl_enums.h',
@@ -453,12 +458,12 @@
             'libANGLE/renderer/gl/glx/functionsglx_typedefs.h',
             'libANGLE/renderer/gl/glx/platform_glx.h',
         ],
-        'libangle_gl_nsgl_sources':
+        'libangle_gl_cgl_sources':
         [
-            'libANGLE/renderer/gl/nsgl/DisplayNSGL.mm',
-            'libANGLE/renderer/gl/nsgl/DisplayNSGL.h',
-            'libANGLE/renderer/gl/nsgl/WindowSurfaceNSGL.mm',
-            'libANGLE/renderer/gl/nsgl/WindowSurfaceNSGL.h',
+            'libANGLE/renderer/gl/cgl/DisplayCGL.mm',
+            'libANGLE/renderer/gl/cgl/DisplayCGL.h',
+            'libANGLE/renderer/gl/cgl/WindowSurfaceCGL.mm',
+            'libANGLE/renderer/gl/cgl/WindowSurfaceCGL.h',
         ],
         'libglesv2_sources':
         [
@@ -704,12 +709,34 @@
                             [
                                 '<@(libangle_gl_glx_sources)',
                             ],
+                            'link_settings': {
+                                'ldflags': [
+                                    '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
+                                ],
+                                'libraries': [
+                                    '<!@(pkg-config --libs-only-l x11 xi) -ldl',
+                                ],
+                            },
+                        }],
+                        ['angle_link_glx==1',
+                        {
+                            'link_settings':
+                            {
+                                'libraries':
+                                [
+                                    '-lGL',
+                                ],
+                            },
+                            'defines':
+                            [
+                                'ANGLE_LINK_GLX',
+                            ],
                         }],
                         ['OS=="mac"',
                         {
                             'sources':
                             [
-                                '<@(libangle_gl_nsgl_sources)',
+                                '<@(libangle_gl_cgl_sources)',
                             ],
                         }],
                     ],
@@ -742,20 +769,6 @@
                 ['angle_build_winphone==1',
                 {
                     'msvs_enable_winphone' : '1',
-                }],
-                ['angle_link_glx==1',
-                {
-                    'link_settings':
-                    {
-                        'libraries':
-                        [
-                            '-lGL',
-                        ],
-                    },
-                    'defines':
-                    [
-                        'ANGLE_LINK_GLX',
-                    ],
                 }],
             ],
         },
@@ -796,17 +809,6 @@
                 ['angle_build_winphone==1',
                 {
                     'msvs_enable_winphone' : '1',
-                }],
-                ['angle_use_glx==1',
-                {
-                    'link_settings': {
-                        'ldflags': [
-                            '<!@(pkg-config --libs-only-L --libs-only-other x11 xi)',
-                        ],
-                        'libraries': [
-                            '<!@(pkg-config --libs-only-l x11 xi) -ldl',
-                        ],
-                    },
                 }],
                 ['OS == "mac"',
                 {

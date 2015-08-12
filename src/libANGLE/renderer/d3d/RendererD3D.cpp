@@ -41,7 +41,8 @@ RendererD3D::RendererD3D(egl::Display *display)
     : mDisplay(display),
       mDeviceLost(false),
       mAnnotator(nullptr),
-      mScratchMemoryBufferResetCounter(0)
+      mScratchMemoryBufferResetCounter(0),
+      mWorkaroundsInitialized(false)
 {
 }
 
@@ -238,9 +239,9 @@ gl::Error RendererD3D::generateSwizzles(const gl::Data &data, gl::SamplerType ty
 {
     gl::Program *program = data.state->getProgram();
 
-    size_t samplerRange = program->getUsedSamplerRange(type);
+    unsigned int samplerRange = static_cast<unsigned int>(program->getUsedSamplerRange(type));
 
-    for (size_t i = 0; i < samplerRange; i++)
+    for (unsigned int i = 0; i < samplerRange; i++)
     {
         GLenum textureType = program->getSamplerTextureType(type, i);
         GLint textureUnit = program->getSamplerMapping(type, i, *data.caps);
@@ -389,8 +390,8 @@ gl::Error RendererD3D::applyTextures(const gl::Data &data, gl::SamplerType shade
 {
     gl::Program *program = data.state->getProgram();
 
-    size_t samplerRange = program->getUsedSamplerRange(shaderType);
-    for (size_t samplerIndex = 0; samplerIndex < samplerRange; samplerIndex++)
+    unsigned int samplerRange = program->getUsedSamplerRange(shaderType);
+    for (unsigned int samplerIndex = 0; samplerIndex < samplerRange; samplerIndex++)
     {
         GLenum textureType = program->getSamplerTextureType(shaderType, samplerIndex);
         GLint textureUnit = program->getSamplerMapping(shaderType, samplerIndex, *data.caps);
@@ -544,20 +545,26 @@ gl::Texture *RendererD3D::getIncompleteTexture(GLenum type)
     {
         const GLubyte color[] = { 0, 0, 0, 255 };
         const gl::Extents colorSize(1, 1, 1);
-        const gl::PixelUnpackState incompleteUnpackState(1, 0);
+        const gl::PixelUnpackState unpack(1, 0);
+        const gl::Box area(0, 0, 0, 1, 1, 1);
 
-        gl::Texture* t = new gl::Texture(createTexture(type), std::numeric_limits<GLuint>::max(), type);
+        // Skip the API layer to avoid needing to pass the Context and mess with dirty bits.
+        gl::Texture *t =
+            new gl::Texture(createTexture(type), std::numeric_limits<GLuint>::max(), type);
+        t->setStorage(type, 1, GL_RGBA8, colorSize);
 
         if (type == GL_TEXTURE_CUBE_MAP)
         {
             for (GLenum face = GL_TEXTURE_CUBE_MAP_POSITIVE_X; face <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z; face++)
             {
-                t->setImage(face, 0, GL_RGBA, colorSize, GL_RGBA, GL_UNSIGNED_BYTE, incompleteUnpackState, color);
+                t->getImplementation()->setSubImage(face, 0, area, GL_RGBA8, GL_UNSIGNED_BYTE,
+                                                    unpack, color);
             }
         }
         else
         {
-            t->setImage(type, 0, GL_RGBA, colorSize, GL_RGBA, GL_UNSIGNED_BYTE, incompleteUnpackState, color);
+            t->getImplementation()->setSubImage(type, 0, area, GL_RGBA8, GL_UNSIGNED_BYTE, unpack,
+                                                color);
         }
 
         mIncompleteTextures[type].set(t);

@@ -11,6 +11,7 @@
 
 #include "libANGLE/Version.h"
 #include "libANGLE/renderer/Renderer.h"
+#include "libANGLE/renderer/gl/WorkaroundsGL.h"
 
 namespace rx
 {
@@ -76,6 +77,8 @@ class RendererGL : public Renderer
     std::string getVendorString() const override;
     std::string getRendererDescription() const override;
 
+    void syncState(const gl::State &state, const gl::State::DirtyBits &dirtyBits) override;
+
     const gl::Version &getMaxSupportedESVersion() const;
 
   private:
@@ -83,12 +86,12 @@ class RendererGL : public Renderer
                       gl::Extensions *outExtensions,
                       gl::Limitations *outLimitations) const override;
 
-    Workarounds generateWorkarounds() const override;
-
     mutable gl::Version mMaxSupportedESVersion;
 
     const FunctionsGL *mFunctions;
     StateManagerGL *mStateManager;
+
+    WorkaroundsGL mWorkarounds;
 
     // For performance debugging
     bool mSkipDrawCalls;

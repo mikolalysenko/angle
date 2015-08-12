@@ -242,7 +242,7 @@ TIntermNode *TCompiler::compileTreeImpl(const char* const shaderStrings[],
         }
 
         root = parseContext.getTreeRoot();
-        success = intermediate.postProcess(root);
+        root = intermediate.postProcess(root);
 
         // Disallow expressions deemed too complex.
         if (success && (compileOptions & SH_LIMIT_EXPRESSION_COMPLEXITY))
@@ -461,6 +461,7 @@ void TCompiler::setResourceString()
               << ":FragmentPrecisionHigh:" << compileResources.FragmentPrecisionHigh
               << ":MaxExpressionComplexity:" << compileResources.MaxExpressionComplexity
               << ":MaxCallStackDepth:" << compileResources.MaxCallStackDepth
+              << ":EXT_blend_func_extended:" << compileResources.EXT_blend_func_extended
               << ":EXT_frag_depth:" << compileResources.EXT_frag_depth
               << ":EXT_shader_texture_lod:" << compileResources.EXT_shader_texture_lod
               << ":EXT_shader_framebuffer_fetch:" << compileResources.EXT_shader_framebuffer_fetch
@@ -470,6 +471,7 @@ void TCompiler::setResourceString()
               << ":MaxFragmentInputVectors:" << compileResources.MaxFragmentInputVectors
               << ":MinProgramTexelOffset:" << compileResources.MinProgramTexelOffset
               << ":MaxProgramTexelOffset:" << compileResources.MaxProgramTexelOffset
+              << ":MaxDualSourceDrawBuffers:" << compileResources.MaxDualSourceDrawBuffers
               << ":NV_draw_buffers:" << compileResources.NV_draw_buffers
               << ":WEBGL_debug_shader_precision:" << compileResources.WEBGL_debug_shader_precision;
 
@@ -542,7 +544,7 @@ bool TCompiler::checkCallDepth()
             infoSink.info << "Call stack too deep (larger than " << maxCallStackDepth
                           << ") with the following call chain: " << record.name;
 
-            int currentFunction = i;
+            int currentFunction = static_cast<int>(i);
             int currentDepth = depth;
 
             while (currentFunction != -1)
@@ -572,7 +574,7 @@ bool TCompiler::checkCallDepth()
 bool TCompiler::tagUsedFunctions()
 {
     // Search from main, starting from the end of the DAG as it usually is the root.
-    for (int i = mCallDag.size(); i-- > 0;)
+    for (size_t i = mCallDag.size(); i-- > 0;)
     {
         if (mCallDag.getRecordFromIndex(i).name == "main(")
         {
@@ -660,9 +662,9 @@ bool TCompiler::pruneUnusedFunctions(TIntermNode *root)
 
 bool TCompiler::validateOutputs(TIntermNode* root)
 {
-    ValidateOutputs validateOutputs(infoSink.info, compileResources.MaxDrawBuffers);
+    ValidateOutputs validateOutputs(getExtensionBehavior(), compileResources.MaxDrawBuffers);
     root->traverse(&validateOutputs);
-    return (validateOutputs.numErrors() == 0);
+    return (validateOutputs.validateAndCountErrors(infoSink.info) == 0);
 }
 
 void TCompiler::rewriteCSSShader(TIntermNode* root)

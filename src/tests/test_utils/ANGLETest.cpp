@@ -17,28 +17,35 @@ ANGLETest::~ANGLETest()
 
 void ANGLETest::SetUp()
 {
-    if (!createEGLContext())
-    {
-        FAIL() << "egl context creation failed.";
-    }
-
+    // Resize the window before creating the context so that the first make current
+    // sets the viewport and scissor box to the right size.
+    bool needSwap = false;
     if (mOSWindow->getWidth() != mWidth || mOSWindow->getHeight() != mHeight)
     {
         if (!mOSWindow->resize(mWidth, mHeight))
         {
             FAIL() << "Failed to resize ANGLE test window.";
         }
+        needSwap = true;
+    }
 
+    if (!createEGLContext())
+    {
+        FAIL() << "egl context creation failed.";
+    }
+
+    if (needSwap)
+    {
         // Swap the buffers so that the default framebuffer picks up the resize
         // which will allow follow-up test code to assume the framebuffer covers
         // the whole window.
         swapBuffers();
-
-        // This Viewport command is not strictly necessary but we add it so that programs
-        // taking OpenGL traces can guess the size of the default framebuffer and show it
-        // in their UIs
-        glViewport(0, 0, mWidth, mHeight);
     }
+
+    // This Viewport command is not strictly necessary but we add it so that programs
+    // taking OpenGL traces can guess the size of the default framebuffer and show it
+    // in their UIs
+    glViewport(0, 0, mWidth, mHeight);
 }
 
 void ANGLETest::TearDown()

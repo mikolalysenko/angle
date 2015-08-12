@@ -186,6 +186,9 @@ void Context::makeCurrent(egl::Surface *surface)
         mHasBeenCurrent = true;
     }
 
+    // TODO(jmadill): Rework this when we support ContextImpl
+    mState.setAllDirtyBits();
+
     // Update default framebuffer
     Framebuffer *defaultFBO = mFramebufferMap[0];
 
@@ -845,7 +848,9 @@ void Context::getIntegerv(GLenum pname, GLint *params)
       case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS: *params = mCaps.maxTransformFeedbackInterleavedComponents; break;
       case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:       *params = mCaps.maxTransformFeedbackSeparateAttributes;    break;
       case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:    *params = mCaps.maxTransformFeedbackSeparateComponents;    break;
-      case GL_NUM_COMPRESSED_TEXTURE_FORMATS:           *params = mCaps.compressedTextureFormats.size();                break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS:
+          *params = static_cast<GLint>(mCaps.compressedTextureFormats.size());
+          break;
       case GL_MAX_SAMPLES_ANGLE:                        *params = mCaps.maxSamples;                                     break;
       case GL_MAX_VIEWPORT_DIMS:
         {
@@ -860,13 +865,13 @@ void Context::getIntegerv(GLenum pname, GLint *params)
         *params = mResetStrategy;
         break;
       case GL_NUM_SHADER_BINARY_FORMATS:
-        *params = mCaps.shaderBinaryFormats.size();
+          *params = static_cast<GLint>(mCaps.shaderBinaryFormats.size());
         break;
       case GL_SHADER_BINARY_FORMATS:
         std::copy(mCaps.shaderBinaryFormats.begin(), mCaps.shaderBinaryFormats.end(), params);
         break;
       case GL_NUM_PROGRAM_BINARY_FORMATS:
-        *params = mCaps.programBinaryFormats.size();
+          *params = static_cast<GLint>(mCaps.programBinaryFormats.size());
         break;
       case GL_PROGRAM_BINARY_FORMATS:
         std::copy(mCaps.programBinaryFormats.begin(), mCaps.programBinaryFormats.end(), params);
@@ -946,19 +951,19 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
       case GL_COMPRESSED_TEXTURE_FORMATS:
         {
             *type = GL_INT;
-            *numParams = mCaps.compressedTextureFormats.size();
+            *numParams = static_cast<unsigned int>(mCaps.compressedTextureFormats.size());
         }
         return true;
       case GL_PROGRAM_BINARY_FORMATS_OES:
         {
             *type = GL_INT;
-            *numParams = mCaps.programBinaryFormats.size();
+            *numParams = static_cast<unsigned int>(mCaps.programBinaryFormats.size());
         }
         return true;
       case GL_SHADER_BINARY_FORMATS:
         {
             *type = GL_INT;
-            *numParams = mCaps.shaderBinaryFormats.size();
+            *numParams = static_cast<unsigned int>(mCaps.shaderBinaryFormats.size());
         }
         return true;
 
@@ -1237,6 +1242,7 @@ bool Context::getIndexedQueryParameterInfo(GLenum target, GLenum *type, unsigned
 
 Error Context::drawArrays(GLenum mode, GLint first, GLsizei count, GLsizei instances)
 {
+    syncRendererState();
     Error error = mRenderer->drawArrays(getData(), mode, first, count, instances);
     if (error.isError())
     {
@@ -1263,6 +1269,7 @@ Error Context::drawElements(GLenum mode, GLsizei count, GLenum type,
                             const GLvoid *indices, GLsizei instances,
                             const RangeUI &indexRange)
 {
+    syncRendererState();
     return mRenderer->drawElements(getData(), mode, count, type, indices, instances, indexRange);
 }
 
@@ -1415,9 +1422,9 @@ void Context::detachBuffer(GLuint buffer)
     mState.removeArrayBufferBinding(buffer);
 
     // mark as freed among the vertex array objects
-    for (auto vaoIt = mVertexArrayMap.begin(); vaoIt != mVertexArrayMap.end(); vaoIt++)
+    for (auto &vaoPair : mVertexArrayMap)
     {
-        vaoIt->second->detachBuffer(buffer);
+        vaoPair.second->detachBuffer(buffer);
     }
 }
 
@@ -1661,4 +1668,23 @@ void Context::initCaps(GLuint clientVersion)
     }
 }
 
+void Context::syncRendererState()
+{
+    const State::DirtyBits &dirtyBits = mState.getDirtyBits();
+    if (dirtyBits.any())
+    {
+        mRenderer->syncState(mState, dirtyBits);
+        mState.clearDirtyBits();
+    }
+}
+
+void Context::syncRendererState(const State::DirtyBits &bitMask)
+{
+    const State::DirtyBits &dirtyBits = (mState.getDirtyBits() & bitMask);
+    if (dirtyBits.any())
+    {
+        mRenderer->syncState(mState, dirtyBits);
+        mState.clearDirtyBits(dirtyBits);
+    }
+}
 }

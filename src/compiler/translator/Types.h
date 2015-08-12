@@ -124,6 +124,7 @@ class TStructure : public TFieldListCollection
         return mDeepestNesting;
     }
     bool containsArrays() const;
+    bool containsType(TBasicType t) const;
     bool containsSamplers() const;
 
     bool equals(const TStructure &other) const;
@@ -490,6 +491,11 @@ class TType
         return structure ? structure->containsArrays() : false;
     }
 
+    bool isStructureContainingType(TBasicType t) const
+    {
+        return structure ? structure->containsType(t) : false;
+    }
+
     bool isStructureContainingSamplers() const
     {
         return structure ? structure->containsSamplers() : false;
@@ -597,6 +603,16 @@ struct TPublicType
         }
 
         return userDef->isStructureContainingArrays();
+    }
+
+    bool isStructureContainingType(TBasicType t) const
+    {
+        if (!userDef)
+        {
+            return false;
+        }
+
+        return userDef->isStructureContainingType(t);
     }
 
     bool isMatrix() const

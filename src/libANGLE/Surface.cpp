@@ -32,7 +32,7 @@ Surface::Surface(rx::SurfaceImpl *impl, EGLint surfaceType, const egl::Config *c
       // FIXME: Determine actual pixel aspect ratio
       mPixelAspectRatio(static_cast<EGLint>(1.0 * EGL_DISPLAY_SCALING)),
       mRenderBuffer(EGL_BACK_BUFFER),
-      mSwapBehavior(EGL_BUFFER_PRESERVED)
+      mSwapBehavior(impl->getSwapBehavior())
 {
     addRef();
 
@@ -134,12 +134,12 @@ EGLint Surface::isFixedSize() const
 
 EGLint Surface::getWidth() const
 {
-    return mFixedSize ? mFixedWidth : mImplementation->getWidth();
+    return mFixedSize ? static_cast<EGLint>(mFixedWidth) : mImplementation->getWidth();
 }
 
 EGLint Surface::getHeight() const
 {
-    return mFixedSize ? mFixedHeight : mImplementation->getHeight();
+    return mFixedSize ? static_cast<EGLint>(mFixedHeight) : mImplementation->getHeight();
 }
 
 Error Surface::bindTexImage(gl::Texture *texture, EGLint buffer)

@@ -45,6 +45,7 @@ class FunctionsGLGLX : public FunctionsGL
 DisplayGLX::DisplayGLX()
     : DisplayGL(),
       mFunctionsGL(nullptr),
+      mContextConfig(nullptr),
       mContext(nullptr),
       mDummyPbuffer(0),
       mUsesNewXDisplay(false),
@@ -88,7 +89,6 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
         }
     }
 
-    glx::FBConfig contextConfig;
     // When glXMakeCurrent is called, the context and the surface must be
     // compatible which in glX-speak means that their config have the same
     // color buffer type, are both RGBA or ColorIndex, and their buffers have
@@ -126,7 +126,7 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
             XFree(candidates);
             return egl::Error(EGL_NOT_INITIALIZED, "Could not find a decent GLX FBConfig to create the context.");
         }
-        contextConfig = candidates[0];
+        mContextConfig = candidates[0];
         XFree(candidates);
     }
 
@@ -136,6 +136,7 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
         //If attribute lists aren't supported, then fall back to glxCreateNewContext
         mContext = mGLX.createNewContext(contextConfig, GLX_RGBA_TYPE, nullptr, True);
     }
+
     if (!mContext)
     {
         return egl::Error(EGL_NOT_INITIALIZED, "Could not create GL context.");
@@ -152,7 +153,7 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
 
     // GLX driver for Parallels VM crashes if attrib list ptr is null
     int pbufferAttribs[] = { 0 };
-    mDummyPbuffer = mGLX.createPbuffer(contextConfig, pbufferAttribs);
+    mDummyPbuffer = mGLX.createPbuffer(mContextConfig, nullptr);
     if (!mDummyPbuffer)
     {
         return egl::Error(EGL_NOT_INITIALIZED, "Could not create the dummy pbuffer.");
@@ -244,6 +245,14 @@ egl::ConfigSet DisplayGLX::generateConfigs() const
 
     bool hasSwapControl = mGLX.hasExtension("GLX_EXT_swap_control");
 
+    int contextSamples = getGLXFBConfigAttrib(mContextConfig, GLX_SAMPLES);
+    int contextSampleBuffers = getGLXFBConfigAttrib(mContextConfig, GLX_SAMPLE_BUFFERS);
+
+    int contextAccumRedSize = getGLXFBConfigAttrib(mContextConfig, GLX_ACCUM_RED_SIZE);
+    int contextAccumGreenSize = getGLXFBConfigAttrib(mContextConfig, GLX_ACCUM_GREEN_SIZE);
+    int contextAccumBlueSize = getGLXFBConfigAttrib(mContextConfig, GLX_ACCUM_BLUE_SIZE);
+    int contextAccumAlphaSize = getGLXFBConfigAttrib(mContextConfig, GLX_ACCUM_ALPHA_SIZE);
+
     int attribList[] =
     {
         GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -289,6 +298,28 @@ egl::ConfigSet DisplayGLX::generateConfigs() const
 
         config.bufferSize = config.redSize + config.greenSize + config.blueSize + config.alphaSize;
 
+        // Multisample and accumulation buffers
+        int samples = getGLXFBConfigAttrib(glxConfig, GLX_SAMPLES);
+        int sampleBuffers = getGLXFBConfigAttrib(glxConfig, GLX_SAMPLE_BUFFERS);
+
+        int accumRedSize = getGLXFBConfigAttrib(glxConfig, GLX_ACCUM_RED_SIZE);
+        int accumGreenSize = getGLXFBConfigAttrib(glxConfig, GLX_ACCUM_GREEN_SIZE);
+        int accumBlueSize = getGLXFBConfigAttrib(glxConfig, GLX_ACCUM_BLUE_SIZE);
+        int accumAlphaSize = getGLXFBConfigAttrib(glxConfig, GLX_ACCUM_ALPHA_SIZE);
+
+        if (samples != contextSamples ||
+            sampleBuffers != contextSampleBuffers ||
+            accumRedSize != contextAccumRedSize ||
+            accumGreenSize != contextAccumGreenSize ||
+            accumBlueSize != contextAccumBlueSize ||
+            accumAlphaSize != contextAccumAlphaSize)
+        {
+            continue;
+        }
+
+        config.samples = samples;
+        config.sampleBuffers = sampleBuffers;
+
         // Transparency
         if (getGLXFBConfigAttrib(glxConfig, GLX_TRANSPARENT_TYPE) == GLX_TRANSPARENT_RGB)
         {
@@ -321,8 +352,6 @@ egl::ConfigSet DisplayGLX::generateConfigs() const
         }
 
         // Misc
-        config.sampleBuffers = getGLXFBConfigAttrib(glxConfig, GLX_SAMPLE_BUFFERS);
-        config.samples = getGLXFBConfigAttrib(glxConfig, GLX_SAMPLES);
         config.level = getGLXFBConfigAttrib(glxConfig, GLX_LEVEL);
 
         config.bindToTextureRGB = EGL_FALSE;

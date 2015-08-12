@@ -55,7 +55,8 @@ void ExpandVariable(const ShaderVariable &variable,
     {
         if (variable.isArray())
         {
-            for (size_t elementIndex = 0; elementIndex < variable.elementCount(); elementIndex++)
+            for (unsigned int elementIndex = 0; elementIndex < variable.elementCount();
+                 elementIndex++)
             {
                 std::string lname = name + ::ArrayString(elementIndex);
                 std::string lmappedName = mappedName + ::ArrayString(elementIndex);
@@ -150,8 +151,9 @@ CollectVariables::CollectVariables(std::vector<sh::Attribute> *attribs,
       mLastFragDataAdded(false),
       mFragColorAdded(false),
       mFragDataAdded(false),
-      mFragDepthEXTAdded(false),
       mFragDepthAdded(false),
+      mSecondaryFragColorEXTAdded(false),
+      mSecondaryFragDataEXTAdded(false),
       mHashFunction(hashFunction),
       mSymbolTable(symbolTable)
 {
@@ -403,8 +405,8 @@ void CollectVariables::visitSymbol(TIntermSymbol *symbol)
                   mFragDataAdded = true;
               }
               return;
-          case EvqFragDepthEXT:
-              if (!mFragDepthEXTAdded)
+          case EvqFragDepth:
+              if (!mFragDepthAdded)
               {
                   Attribute info;
                   const char kName[] = "gl_FragDepthEXT";
@@ -418,25 +420,42 @@ void CollectVariables::visitSymbol(TIntermSymbol *symbol)
                                               ->getType());
                   info.staticUse = true;
                   mOutputVariables->push_back(info);
-                  mFragDepthEXTAdded = true;
-              }
-              return;
-          case EvqFragDepth:
-              if (!mFragDepthAdded)
-              {
-                  Attribute info;
-                  const char kName[] = "gl_FragDepth";
-                  info.name          = kName;
-                  info.mappedName    = kName;
-                  info.type          = GL_FLOAT;
-                  info.arraySize     = 0;
-                  info.precision     = GL_HIGH_FLOAT;
-                  info.staticUse = true;
-                  mOutputVariables->push_back(info);
                   mFragDepthAdded = true;
               }
               return;
+          case EvqSecondaryFragColorEXT:
+              if (!mSecondaryFragColorEXTAdded)
+              {
+                  Attribute info;
+                  const char kName[] = "gl_SecondaryFragColorEXT";
+                  info.name          = kName;
+                  info.mappedName    = kName;
+                  info.type          = GL_FLOAT_VEC4;
+                  info.arraySize     = 0;
+                  info.precision     = GL_MEDIUM_FLOAT;  // Defined by spec.
+                  info.staticUse = true;
+                  mOutputVariables->push_back(info);
+                  mSecondaryFragColorEXTAdded = true;
+              }
+              return;
+          case EvqSecondaryFragDataEXT:
+              if (!mSecondaryFragDataEXTAdded)
+              {
+                  Attribute info;
+                  const char kName[] = "gl_SecondaryFragDataEXT";
+                  info.name          = kName;
+                  info.mappedName    = kName;
+                  info.type          = GL_FLOAT_VEC4;
 
+                  const TVariable *maxDualSourceDrawBuffersVar = static_cast<const TVariable *>(
+                      mSymbolTable.findBuiltIn("gl_MaxDualSourceDrawBuffersEXT", 100));
+                  info.arraySize = maxDualSourceDrawBuffersVar->getConstPointer()->getIConst();
+                  info.precision = GL_MEDIUM_FLOAT;  // Defined by spec.
+                  info.staticUse = true;
+                  mOutputVariables->push_back(info);
+                  mSecondaryFragDataEXTAdded = true;
+              }
+              return;
           default:
             break;
         }
