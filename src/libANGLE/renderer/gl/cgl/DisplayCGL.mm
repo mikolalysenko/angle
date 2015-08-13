@@ -130,14 +130,21 @@ SurfaceImpl *DisplayCGL::createWindowSurface(const egl::Config *configuration,
 SurfaceImpl *DisplayCGL::createPbufferSurface(const egl::Config *configuration,
                                               const egl::AttributeMap &attribs)
 {
-    UNIMPLEMENTED();
-    return nullptr;
+
+    EGLint width = attribs.get(EGL_WIDTH, 0);
+    EGLint height = attribs.get(EGL_HEIGHT, 0);
+
+    WindowSurfaceCGL* result = new WindowSurfaceCGL(this, NULL, mFunctions);
+    result->setShape(width, height);
+
+    return result;
 }
 
 SurfaceImpl* DisplayCGL::createPbufferFromClientBuffer(const egl::Config *configuration,
                                                        EGLClientBuffer shareHandle,
                                                        const egl::AttributeMap &attribs)
 {
+    printf("This got called instead\n");
     UNIMPLEMENTED();
     return nullptr;
 }
@@ -213,6 +220,11 @@ egl::ConfigSet DisplayCGL::generateConfigs() const
     config.matchNativePixmap = EGL_NONE;
 
     configs.add(config);
+
+    //Add pbuffers
+    config.surfaceType = EGL_PBUFFER_BIT;
+    configs.add(config);
+
     return configs;
 }
 

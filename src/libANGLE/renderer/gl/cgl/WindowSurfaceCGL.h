@@ -47,12 +47,16 @@ class WindowSurfaceCGL : public SurfaceGL
 
     FramebufferImpl *createDefaultFramebuffer(const gl::Framebuffer::Data &data) override;
 
+    void setShape(EGLint width, EGLint height);
+
   private:
     struct Surface
     {
         IOSurfaceRef ioSurface;
         GLuint texture;
     };
+
+    EGLint mWidth, mHeight;
 
     DisplayCGL *mDisplay;
     CALayer *mLayer;

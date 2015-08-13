@@ -25,6 +25,8 @@ namespace rx
 
 WindowSurfaceCGL::WindowSurfaceCGL(DisplayCGL *display, CALayer *layer, const FunctionsGL *functions)
     : SurfaceGL(display->getRenderer()),
+      mWidth(0),
+      mHeight(0),
       mDisplay(display),
       mLayer(layer),
       mFunctions(functions),
@@ -132,27 +134,28 @@ egl::Error WindowSurfaceCGL::swap()
     // as specified in the documentation of CGLTexImageIOSurface2D
     mFunctions->flush();
 
-    // Put the IOSurface as the content of the layer
-    [CATransaction begin];
-    [mLayer setContents: (id) mSurfaces[mCurrentSurface].ioSurface];
-    [CATransaction commit];
+    if(mLayer) {
+        // Put the IOSurface as the content of the layer
+        [CATransaction begin];
+        [mLayer setContents: (id) mSurfaces[mCurrentSurface].ioSurface];
+        [CATransaction commit];
 
-    mCurrentSurface = (mCurrentSurface + 1) % 2;
-    IOSurfaceRef surface = mSurfaces[mCurrentSurface].ioSurface;
+        mCurrentSurface = (mCurrentSurface + 1) % 2;
+        IOSurfaceRef surface = mSurfaces[mCurrentSurface].ioSurface;
 
-    // Wait for the compositor to have finished using the IOSurface before
-    // rendering to it again.
-    // TODO(cwallez) this doesn't seem to work when dragging the window on
-    // the top of the screen, figure out a better way to do it?
-    if (IOSurfaceIsInUse(surface))
-    {
-        IOSurfaceLock(surface, kIOSurfaceLockReadOnly, nullptr);
-        IOSurfaceUnlock(surface, kIOSurfaceLockReadOnly, nullptr);
+        // Wait for the compositor to have finished using the IOSurface before
+        // rendering to it again.
+        // TODO(cwallez) this doesn't seem to work when dragging the window on
+        // the top of the screen, figure out a better way to do it?
+        if (IOSurfaceIsInUse(surface))
+        {
+            IOSurfaceLock(surface, kIOSurfaceLockReadOnly, nullptr);
+            IOSurfaceUnlock(surface, kIOSurfaceLockReadOnly, nullptr);
+        }
     }
 
     mStateManager->bindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
     mFunctions->framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE_ARB, mSurfaces[mCurrentSurface].texture, 0);
-
 
     return egl::Error(EGL_SUCCESS);
 }
@@ -187,14 +190,26 @@ void WindowSurfaceCGL::setSwapInterval(EGLint interval)
     //UNIMPLEMENTED();
 }
 
+void WindowSurfaceCGL::setShape(EGLint width, EGLint height)
+{
+    mWidth = width;
+    mHeight = height;
+}
+
 EGLint WindowSurfaceCGL::getWidth() const
 {
-    return CGRectGetWidth([mLayer frame]);
+    if(mLayer) {
+      return CGRectGetWidth([mLayer frame]);
+    }
+    return mWidth;
 }
 
 EGLint WindowSurfaceCGL::getHeight() const
 {
-    return CGRectGetHeight([mLayer frame]);
+    if(mLayer) {
+      return CGRectGetHeight([mLayer frame]);
+    }
+    return mHeight;
 }
 
 EGLint WindowSurfaceCGL::isPostSubBufferSupported() const
