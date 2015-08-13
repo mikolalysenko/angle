@@ -135,7 +135,8 @@
                     {
                         'libraries':
                         [
-                            '-framework AppKit',
+                            'AppKit.framework',
+                            'QuartzCore.framework',
                         ],
                     },
                 }],

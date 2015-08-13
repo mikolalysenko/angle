@@ -387,7 +387,7 @@ Error ValidateCreatePbufferSurface(Display *display, Config *config, const Attri
     {
         return error;
     }
-    
+
     for (AttributeMap::const_iterator attributeIter = attributes.begin(); attributeIter != attributes.end(); attributeIter++)
     {
         EGLint attribute = attributeIter->first;

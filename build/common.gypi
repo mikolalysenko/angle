@@ -38,7 +38,7 @@
         'default_configuration': 'Debug',
         'variables':
         {
-            'warn_as_error%': 1,
+            'warn_as_error%': 0,
         },
         'target_conditions':
         [
@@ -341,7 +341,6 @@
         {
             'target_defaults': {
                 'xcode_settings': {
-                    'MACOSX_DEPLOYMENT_TARGET': '10.7',
                     'OTHER_CFLAGS': [
                       '-std=c++11',
                       '-stdlib=libc++',
