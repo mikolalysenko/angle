@@ -36,7 +36,11 @@ VertexArrayGL::VertexArrayGL(const gl::VertexArray::Data &data,
 {
     ASSERT(mFunctions);
     ASSERT(mStateManager);
-    mFunctions->genVertexArrays(1, &mVertexArrayID);
+
+    if(mFunctions->genVertexArrays) {
+      //FIXME: This is a workaround for drivers which don't support VAOs
+      mFunctions->genVertexArrays(1, &mVertexArrayID);
+    }
 
     // Set the cached vertex attribute array size
     GLint maxVertexAttribs;

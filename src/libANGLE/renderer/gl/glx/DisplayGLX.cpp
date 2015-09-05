@@ -131,10 +131,10 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
     }
 
     if(mGLX.hasExtension("GLX_ARB_create_context")) {
-        mContext = mGLX.createContextAttribsARB(contextConfig, nullptr, True, nullptr);
+        mContext = mGLX.createContextAttribsARB(mContextConfig, nullptr, True, nullptr);
     } else {
         //If attribute lists aren't supported, then fall back to glxCreateNewContext
-        mContext = mGLX.createNewContext(contextConfig, GLX_RGBA_TYPE, nullptr, True);
+        mContext = mGLX.createNewContext(mContextConfig, GLX_RGBA_TYPE, nullptr, True);
     }
 
     if (!mContext)
@@ -153,7 +153,7 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
 
     // GLX driver for Parallels VM crashes if attrib list ptr is null
     int pbufferAttribs[] = { 0 };
-    mDummyPbuffer = mGLX.createPbuffer(mContextConfig, nullptr);
+    mDummyPbuffer = mGLX.createPbuffer(mContextConfig, pbufferAttribs);
     if (!mDummyPbuffer)
     {
         return egl::Error(EGL_NOT_INITIALIZED, "Could not create the dummy pbuffer.");
@@ -209,9 +209,9 @@ SurfaceImpl *DisplayGLX::createPbufferSurface(const egl::Config *configuration,
     ASSERT(configIdToGLXConfig.count(configuration->configID) > 0);
     glx::FBConfig fbConfig = configIdToGLXConfig[configuration->configID];
 
-    EGLint width = attribs.get(EGL_WIDTH, 0);
+    EGLint width  = attribs.get(EGL_WIDTH, 0);
     EGLint height = attribs.get(EGL_HEIGHT, 0);
-    bool largest = (attribs.get(EGL_LARGEST_PBUFFER, EGL_FALSE) == EGL_TRUE);
+    bool largest  = (attribs.get(EGL_LARGEST_PBUFFER, EGL_FALSE) == EGL_TRUE);
 
     return new PbufferSurfaceGLX(width, height, largest, mGLX, mContext, fbConfig);
 }
