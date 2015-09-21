@@ -98,7 +98,7 @@ LinkResult ProgramGL::link(const gl::Data &data, gl::InfoLog &infoLog,
     // Verify the link
     GLint linkStatus = GL_FALSE;
     mFunctions->getProgramiv(mProgramID, GL_LINK_STATUS, &linkStatus);
-    ASSERT(linkStatus == GL_TRUE);
+    //ASSERT(linkStatus == GL_TRUE);
     if (linkStatus == GL_FALSE)
     {
         // Linking failed, put the error into the info log
