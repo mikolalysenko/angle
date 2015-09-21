@@ -152,7 +152,14 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
     // and destroy the pbuffer before going back to the application but this is TODO
 
     // GLX driver for Parallels VM crashes if attrib list ptr is null
-    int pbufferAttribs[] = { 0 };
+    // We need a non zero width + height or Mesa will complain with an X_CreatePixmap error:
+    // BadValue (integer parameter out of range for operation)
+    int pbufferAttribs[] = 
+    { 
+        GLX_PBUFFER_WIDTH, 1, 
+        GLX_PBUFFER_HEIGHT, 1, 
+        0
+    };
     mDummyPbuffer = mGLX.createPbuffer(mContextConfig, pbufferAttribs);
     if (!mDummyPbuffer)
     {
