@@ -58,7 +58,7 @@ class Framebuffer
         const FramebufferAttachment *getReadAttachment() const;
         const FramebufferAttachment *getFirstColorAttachment() const;
         const FramebufferAttachment *getDepthOrStencilAttachment() const;
-        const FramebufferAttachment *getColorAttachment(unsigned int colorAttachment) const;
+        const FramebufferAttachment *getColorAttachment(size_t colorAttachment) const;
         const FramebufferAttachment *getDepthAttachment() const;
         const FramebufferAttachment *getStencilAttachment() const;
         const FramebufferAttachment *getDepthStencilAttachment() const;
@@ -95,7 +95,7 @@ class Framebuffer
     void detachTexture(GLuint texture);
     void detachRenderbuffer(GLuint renderbuffer);
 
-    const FramebufferAttachment *getColorbuffer(unsigned int colorAttachment) const;
+    const FramebufferAttachment *getColorbuffer(size_t colorAttachment) const;
     const FramebufferAttachment *getDepthbuffer() const;
     const FramebufferAttachment *getStencilbuffer() const;
     const FramebufferAttachment *getDepthStencilBuffer() const;
@@ -112,9 +112,9 @@ class Framebuffer
     GLenum getReadBufferState() const;
     void setReadBuffer(GLenum buffer);
 
-    bool isEnabledColorAttachment(unsigned int colorAttachment) const;
+    bool isEnabledColorAttachment(size_t colorAttachment) const;
     bool hasEnabledColorAttachment() const;
-    int getNumColorBuffers() const;
+    size_t getNumColorBuffers() const;
     bool hasStencil() const;
     int getSamples(const gl::Data &data) const;
     bool usingExtendedDrawBuffers() const;

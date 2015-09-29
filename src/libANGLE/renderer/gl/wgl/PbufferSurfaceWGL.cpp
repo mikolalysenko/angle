@@ -16,8 +16,15 @@
 namespace rx
 {
 
-PbufferSurfaceWGL::PbufferSurfaceWGL(RendererGL *renderer, EGLint width, EGLint height, EGLenum textureFormat, EGLenum textureTarget,
-                                     bool largest, int pixelFormat, HDC deviceContext, HGLRC wglContext,
+PbufferSurfaceWGL::PbufferSurfaceWGL(RendererGL *renderer,
+                                     EGLint width,
+                                     EGLint height,
+                                     EGLenum textureFormat,
+                                     EGLenum textureTarget,
+                                     bool largest,
+                                     int pixelFormat,
+                                     HDC deviceContext,
+                                     HGLRC wglContext,
                                      const FunctionsWGL *functions)
     : SurfaceGL(renderer),
       mWidth(width),

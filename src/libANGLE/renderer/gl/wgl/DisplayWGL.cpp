@@ -321,7 +321,8 @@ SurfaceImpl *DisplayWGL::createWindowSurface(const egl::Config *configuration,
                                              EGLNativeWindowType window,
                                              const egl::AttributeMap &attribs)
 {
-    return new WindowSurfaceWGL(this->getRenderer(), window, mPixelFormat, mWGLContext, mFunctionsWGL);
+    return new WindowSurfaceWGL(this->getRenderer(), window, mPixelFormat, mWGLContext,
+                                mFunctionsWGL);
 }
 
 SurfaceImpl *DisplayWGL::createPbufferSurface(const egl::Config *configuration,
@@ -333,8 +334,8 @@ SurfaceImpl *DisplayWGL::createPbufferSurface(const egl::Config *configuration,
     EGLenum textureFormat = attribs.get(EGL_TEXTURE_FORMAT, EGL_NO_TEXTURE);
     EGLenum textureTarget = attribs.get(EGL_TEXTURE_TARGET, EGL_NO_TEXTURE);
 
-    return new PbufferSurfaceWGL(this->getRenderer(), width, height, textureFormat, textureTarget, largest,
-                                 mPixelFormat, mDeviceContext, mWGLContext, mFunctionsWGL);
+    return new PbufferSurfaceWGL(this->getRenderer(), width, height, textureFormat, textureTarget,
+                                 largest, mPixelFormat, mDeviceContext, mWGLContext, mFunctionsWGL);
 }
 
 SurfaceImpl *DisplayWGL::createPbufferFromClientBuffer(const egl::Config *configuration,
@@ -465,7 +466,7 @@ const FunctionsGL *DisplayWGL::getFunctionsGL() const
 
 void DisplayWGL::generateExtensions(egl::DisplayExtensions *outExtensions) const
 {
-    //UNIMPLEMENTED();
+    outExtensions->createContext = true;
 }
 
 void DisplayWGL::generateCaps(egl::Caps *outCaps) const

@@ -21,9 +21,9 @@ class NullFactory : public ImplFactory
     NullFactory() {}
 
     // Shader creation
-    CompilerImpl *createCompiler(const gl::Data &data) override { return nullptr; }
-    ShaderImpl *createShader(GLenum type) override { return nullptr; }
-    ProgramImpl *createProgram() override { return nullptr; }
+    CompilerImpl *createCompiler() override { return nullptr; }
+    ShaderImpl *createShader(const gl::Shader::Data &data) override { return nullptr; }
+    ProgramImpl *createProgram(const gl::Program::Data &data) override { return nullptr; }
 
     // Framebuffer creation
     FramebufferImpl *createFramebuffer(const gl::Framebuffer::Data &data) override { return nullptr; }
@@ -47,6 +47,9 @@ class NullFactory : public ImplFactory
 
     // Transform Feedback creation
     TransformFeedbackImpl *createTransformFeedback() override { return nullptr; }
+
+    // Sampler object creation
+    SamplerImpl *createSampler() override { return nullptr; }
 };
 
 }

@@ -13,9 +13,18 @@ extern "C" {
 }
 #endif
 
+#if defined(OS_MACOSX)
+#include "gpu_test_config_mac.h"
+#endif
+
 using namespace gpu;
 
 #if defined(OS_WIN)
+
+namespace base {
+
+namespace {
+
 // Disable the deprecated function warning for GetVersionEx
 #pragma warning(disable: 4996)
 
@@ -36,6 +45,10 @@ void SysInfo::OperatingSystemVersionNumbers(
   *minor_version = version_info.dwMinorVersion;
   *bugfix_version = version_info.dwBuildNumber;
 }
+
+} // anonymous namespace
+
+} // namespace base
 
 void DeviceIDToVendorAndDevice(const std::string& id,
                                uint32* vendor_id,
@@ -159,7 +172,24 @@ CollectInfoResult CollectGpuID(uint32* vendor_id, uint32* device_id) {
   }
   return result;
 }
+
 #endif // defined(OS_LINUX)
+
+#if defined(OS_MACOSX)
+
+CollectInfoResult CollectGpuID(uint32* vendor_id, uint32* device_id) {
+  DCHECK(vendor_id && device_id);
+
+  GPUInfo::GPUDevice gpu = GetActiveGPU();
+  *vendor_id = gpu.vendor_id;
+  *device_id = gpu.device_id;
+
+  if (*vendor_id != 0 && *device_id != 0)
+    return kCollectInfoSuccess;
+  return kCollectInfoNonFatalFailure;
+}
+
+#endif
 
 namespace gpu {
 

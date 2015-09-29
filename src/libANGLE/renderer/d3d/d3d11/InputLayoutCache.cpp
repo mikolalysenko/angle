@@ -46,22 +46,20 @@ gl::InputLayout GetInputLayout(
     return inputLayout;
 }
 
-GLenum GetNextGLSLAttributeType(const sh::Attribute *linkedAttributes, int index)
+GLenum GetGLSLAttributeType(const std::vector<sh::Attribute> &shaderAttributes, int index)
 {
     // Count matrices differently
-    int subIndex = 0;
-    for (int attribIndex = 0; attribIndex < gl::MAX_VERTEX_ATTRIBS; ++attribIndex)
+    for (const sh::Attribute &attrib : shaderAttributes)
     {
-        GLenum attribType = linkedAttributes[attribIndex].type;
-
-        if (attribType == GL_NONE)
+        if (attrib.location == -1)
         {
             continue;
         }
 
-        GLenum transposedType = gl::TransposeMatrixType(attribType);
-        subIndex += gl::VariableRowCount(transposedType);
-        if (subIndex > index)
+        GLenum transposedType = gl::TransposeMatrixType(attrib.type);
+        int rows              = gl::VariableRowCount(transposedType);
+
+        if (index >= attrib.location && index < attrib.location + rows)
         {
             return transposedType;
         }
@@ -187,6 +185,8 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
     bool instancedPointSpritesActive = programUsesInstancedPointSprites && (mode == GL_POINTS);
     bool indexedPointSpriteEmulationActive = instancedPointSpritesActive && (sourceInfo != nullptr);
 
+    const auto &semanticToLocation = programD3D->getAttributesByLayout();
+
     if (!mDevice || !mDeviceContext)
     {
         return gl::Error(GL_OUT_OF_MEMORY, "Internal input layout cache is not initialized.");
@@ -202,7 +202,7 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
     unsigned int firstInstancedElement = gl::MAX_VERTEX_ATTRIBS;
     unsigned int nextAvailableInputSlot = 0;
 
-    const sh::Attribute *linkedAttributes = program->getLinkedAttributes();
+    const std::vector<sh::Attribute> &shaderAttributes = program->getAttributes();
 
     for (unsigned int i = 0; i < unsortedAttributes.size(); i++)
     {
@@ -234,7 +234,8 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
 
             // Record the type of the associated vertex shader vector in our key
             // This will prevent mismatched vertex shaders from using the same input layout
-            GLenum glslElementType = GetNextGLSLAttributeType(linkedAttributes, inputElementCount);
+            GLenum glslElementType = GetGLSLAttributeType(
+                shaderAttributes, semanticToLocation[sortedSemanticIndices[i]]);
 
             layout.addAttributeData(glslElementType,
                                     sortedSemanticIndices[i],
@@ -455,7 +456,10 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
     // PointSprite quad.
     // An index buffer also needs to be created and applied because rendering instanced
     // data on D3D11 FL9_3 requires DrawIndexedInstanced() to be used.
-    if (instancedPointSpritesActive)
+    // Shaders that contain gl_PointSize and used without the GL_POINTS rendering mode
+    // require a vertex buffer because some drivers cannot handle missing vertex data
+    // and will TDR the system.
+    if (programUsesInstancedPointSprites)
     {
         HRESULT result = S_OK;
         const UINT pointSpriteVertexStride = sizeof(float) * 5;
@@ -490,7 +494,10 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
         }
 
         mCurrentBuffers[nextAvailableIndex] = mPointSpriteVertexBuffer;
-        mCurrentVertexStrides[nextAvailableIndex] = pointSpriteVertexStride;
+        // Set the stride to 0 if GL_POINTS mode is not being used to instruct the driver
+        // to avoid indexing into the vertex buffer.
+        mCurrentVertexStrides[nextAvailableIndex] =
+            instancedPointSpritesActive ? pointSpriteVertexStride : 0;
         mCurrentVertexOffsets[nextAvailableIndex] = 0;
 
         if (!mPointSpriteIndexBuffer)
@@ -518,11 +525,16 @@ gl::Error InputLayoutCache::applyVertexBuffers(const std::vector<TranslatedAttri
             }
         }
 
-        // The index buffer is applied here because Instanced PointSprite emulation uses
-        // the a non-indexed rendering path in ANGLE (DrawArrays).  This means that applyIndexBuffer()
-        // on the renderer will not be called and setting this buffer here ensures that the rendering
-        // path will contain the correct index buffers.
-        mDeviceContext->IASetIndexBuffer(mPointSpriteIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+        if (instancedPointSpritesActive)
+        {
+            // The index buffer is applied here because Instanced PointSprite emulation uses
+            // the a non-indexed rendering path in ANGLE (DrawArrays).  This means that
+            // applyIndexBuffer()
+            // on the renderer will not be called and setting this buffer here ensures that the
+            // rendering
+            // path will contain the correct index buffers.
+            mDeviceContext->IASetIndexBuffer(mPointSpriteIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+        }
     }
 
     if (moveFirstIndexedIntoSlotZero)

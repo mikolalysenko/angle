@@ -21,8 +21,13 @@ class FunctionsGLX;
 class PbufferSurfaceGLX : public SurfaceGL
 {
   public:
-    PbufferSurfaceGLX(RendererGL *renderer, EGLint width, EGLint height, bool largest, const FunctionsGLX &glx,
-                      glx::Context context, glx::FBConfig fbConfig);
+    PbufferSurfaceGLX(RendererGL *renderer,
+                      EGLint width,
+                      EGLint height,
+                      bool largest,
+                      const FunctionsGLX &glx,
+                      glx::Context context,
+                      glx::FBConfig fbConfig);
     ~PbufferSurfaceGLX() override;
 
     egl::Error initialize() override;

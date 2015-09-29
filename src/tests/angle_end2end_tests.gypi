@@ -9,9 +9,10 @@
 # gtest harness in a main.cpp.
 
 {
+    # Everything below this is duplicated in the GN build.
+    # If you change anything also change angle/src/tests/BUILD.gn
     'variables':
     {
-        # This file list will be shared with the GN build.
         'angle_end2end_tests_sources':
         [
             '<(angle_path)/src/tests/gl_tests/BlendMinMaxTest.cpp',
@@ -19,6 +20,7 @@
             '<(angle_path)/src/tests/gl_tests/BufferDataTest.cpp',
             '<(angle_path)/src/tests/gl_tests/ClearTest.cpp',
             '<(angle_path)/src/tests/gl_tests/CompressedTextureTest.cpp',
+            '<(angle_path)/src/tests/gl_tests/CopyTexImageTest.cpp',
             '<(angle_path)/src/tests/gl_tests/CubeMapTextureTest.cpp',
             '<(angle_path)/src/tests/gl_tests/DebugMarkerTest.cpp',
             '<(angle_path)/src/tests/gl_tests/DepthStencilFormatsTest.cpp',
@@ -70,6 +72,7 @@
         ],
         'angle_end2end_tests_win_sources':
         [
+            '<(angle_path)/src/tests/gl_tests/D3DImageFormatConversionTest.cpp',
             '<(angle_path)/src/tests/gl_tests/D3D11EmulatedIndexedBufferTest.cpp',
             '<(angle_path)/src/tests/gl_tests/D3D11FormatTablesTest.cpp',
             '<(angle_path)/src/tests/gl_tests/D3D11InputLayoutCacheTest.cpp',

@@ -15,9 +15,38 @@
 namespace rx
 {
 
+class BlitGL;
 class FunctionsGL;
 class StateManagerGL;
 struct WorkaroundsGL;
+
+struct LUMAWorkaroundGL
+{
+    bool enabled;
+    GLenum workaroundFormat;
+
+    LUMAWorkaroundGL();
+    LUMAWorkaroundGL(bool enabled, GLenum workaroundFormat);
+};
+
+// Structure containing information about format and workarounds for each mip level of the
+// TextureGL.
+struct LevelInfoGL
+{
+    // Format of the data used in this mip level.
+    GLenum sourceFormat;
+
+    // If this mip level requires sampler-state re-writing so that only a red channel is exposed.
+    bool depthStencilWorkaround;
+
+    // Information about luminance alpha texture workarounds in the core profile.
+    LUMAWorkaroundGL lumaWorkaround;
+
+    LevelInfoGL();
+    LevelInfoGL(GLenum sourceFormat,
+                bool depthStencilWorkaround,
+                const LUMAWorkaroundGL &lumaWorkaround);
+};
 
 class TextureGL : public TextureImpl
 {
@@ -25,7 +54,8 @@ class TextureGL : public TextureImpl
     TextureGL(GLenum type,
               const FunctionsGL *functions,
               const WorkaroundsGL &workarounds,
-              StateManagerGL *stateManager);
+              StateManagerGL *stateManager,
+              BlitGL *blitter);
     ~TextureGL() override;
 
     void setUsage(GLenum usage) override;
@@ -47,14 +77,14 @@ class TextureGL : public TextureImpl
 
     gl::Error setStorage(GLenum target, size_t levels, GLenum internalFormat, const gl::Extents &size) override;
 
-    gl::Error generateMipmaps(const gl::SamplerState &samplerState) override;
+    gl::Error generateMipmaps(const gl::TextureState &textureState) override;
 
     void bindTexImage(egl::Surface *surface) override;
     void releaseTexImage() override;
 
     gl::Error setEGLImageTarget(GLenum target, egl::Image *image) override;
 
-    void syncSamplerState(const gl::SamplerState &samplerState) const;
+    void syncState(size_t textureUnit, const gl::TextureState &textureState) const;
     GLuint getTextureID() const;
 
     gl::Error getAttachmentRenderTarget(const gl::FramebufferAttachment::Target &target,
@@ -69,8 +99,11 @@ class TextureGL : public TextureImpl
     const FunctionsGL *mFunctions;
     const WorkaroundsGL &mWorkarounds;
     StateManagerGL *mStateManager;
+    BlitGL *mBlitter;
 
-    mutable gl::SamplerState mAppliedSamplerState;
+    std::vector<LevelInfoGL> mLevelInfo;
+
+    mutable gl::TextureState mAppliedTextureState;
     GLuint mTextureID;
 };
 

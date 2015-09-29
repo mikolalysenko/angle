@@ -71,15 +71,15 @@ class Matrix
     {
         ASSERT(columns() == m.rows());
 
-        size_t resultRows = rows();
-        size_t resultCols = m.columns();
+        unsigned int resultRows = rows();
+        unsigned int resultCols = m.columns();
         Matrix<T> result(std::vector<T>(resultRows * resultCols), resultRows, resultCols);
-        for (size_t i = 0; i < resultRows; i++)
+        for (unsigned int i = 0; i < resultRows; i++)
         {
-            for (size_t j = 0; j < resultCols; j++)
+            for (unsigned int j = 0; j < resultCols; j++)
             {
                 T tmp = 0.0f;
-                for (size_t k = 0; k < columns(); k++)
+                for (unsigned int k = 0; k < columns(); k++)
                     tmp += at(i, k) * m(k, j);
                 result(i, j) = tmp;
             }

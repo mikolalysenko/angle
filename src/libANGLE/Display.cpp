@@ -317,8 +317,7 @@ void Display::terminate()
 
     mInitialized = false;
 
-    // De-init default platform
-    DeinitDefaultPlatformImpl();
+    // Never de-init default platform.. terminate is not that final.
 }
 
 std::vector<const Config*> Display::getConfigs(const egl::AttributeMap &attribs) const
@@ -725,6 +724,8 @@ static ClientExtensions GenerateClientExtensions()
     extensions.platformANGLEOpenGL = true;
 #endif
 
+    extensions.clientGetAllProcAddresses = true;
+
     return extensions;
 }
 
@@ -753,6 +754,10 @@ const std::string &Display::getClientExtensionString()
 void Display::initDisplayExtensions()
 {
     mDisplayExtensions = mImplementation->getExtensions();
+
+    // Force EGL_KHR_get_all_proc_addresses on.
+    mDisplayExtensions.getAllProcAddresses = true;
+
     mDisplayExtensionString = GenerateExtensionsString(mDisplayExtensions);
 }
 

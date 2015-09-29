@@ -52,7 +52,7 @@ class BitSetIterator final
     Iterator end() const { return Iterator(std::bitset<N>(0)); }
 
   private:
-    const std::bitset<N> &mBits;
+    const std::bitset<N> mBits;
 };
 
 template <size_t N>
@@ -84,7 +84,7 @@ BitSetIterator<N>::Iterator::Iterator(const std::bitset<N> &bits)
     }
     else
     {
-        mOffset = rx::roundUp(N, BitsPerWord);
+        mOffset = static_cast<unsigned long>(rx::roundUp(N, BitsPerWord));
     }
 }
 

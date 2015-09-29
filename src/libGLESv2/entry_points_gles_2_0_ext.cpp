@@ -100,7 +100,7 @@ void GL_APIENTRY DrawArraysInstancedANGLE(GLenum mode, GLint first, GLsizei coun
             return;
         }
 
-        Error error = context->drawArrays(mode, first, count, primcount);
+        Error error = context->drawArraysInstanced(mode, first, count, primcount);
         if (error.isError())
         {
             context->recordError(error);
@@ -117,13 +117,14 @@ void GL_APIENTRY DrawElementsInstancedANGLE(GLenum mode, GLsizei count, GLenum t
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        RangeUI indexRange;
+        IndexRange indexRange;
         if (!ValidateDrawElementsInstancedANGLE(context, mode, count, type, indices, primcount, &indexRange))
         {
             return;
         }
 
-        Error error = context->drawElements(mode, count, type, indices, primcount, indexRange);
+        Error error =
+            context->drawElementsInstanced(mode, count, type, indices, primcount, indexRange);
         if (error.isError())
         {
             context->recordError(error);
@@ -805,39 +806,9 @@ void GL_APIENTRY DrawBuffersEXT(GLsizei n, const GLenum *bufs)
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        if (n < 0 || static_cast<GLuint>(n) > context->getCaps().maxDrawBuffers)
+        if (!ValidateDrawBuffers(context, n, bufs))
         {
-            context->recordError(Error(GL_INVALID_VALUE));
             return;
-        }
-
-        ASSERT(context->getState().getDrawFramebuffer());
-
-        if (context->getState().getDrawFramebuffer()->id() == 0)
-        {
-            if (n != 1)
-            {
-                context->recordError(Error(GL_INVALID_OPERATION));
-                return;
-            }
-
-            if (bufs[0] != GL_NONE && bufs[0] != GL_BACK)
-            {
-                context->recordError(Error(GL_INVALID_OPERATION));
-                return;
-            }
-        }
-        else
-        {
-            for (int colorAttachment = 0; colorAttachment < n; colorAttachment++)
-            {
-                const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT + colorAttachment;
-                if (bufs[colorAttachment] != GL_NONE && bufs[colorAttachment] != attachment)
-                {
-                    context->recordError(Error(GL_INVALID_OPERATION));
-                    return;
-                }
-            }
         }
 
         Framebuffer *framebuffer = context->getState().getDrawFramebuffer();

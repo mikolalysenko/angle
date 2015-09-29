@@ -311,17 +311,13 @@ bool TIntermAggregate::replaceChildNodeWithMultiple(TIntermNode *original, TInte
 
 bool TIntermAggregate::insertChildNodes(TIntermSequence::size_type position, TIntermSequence insertions)
 {
-    TIntermSequence::size_type itPosition = 0;
-    for (auto it = mSequence.begin(); it < mSequence.end(); ++it)
+    if (position > mSequence.size())
     {
-        if (itPosition == position)
-        {
-            mSequence.insert(it, insertions.begin(), insertions.end());
-            return true;
-        }
-        ++itPosition;
+        return false;
     }
-    return false;
+    auto it = mSequence.begin() + position;
+    mSequence.insert(it, insertions.begin(), insertions.end());
+    return true;
 }
 
 void TIntermAggregate::setPrecisionFromChildren()
@@ -365,7 +361,7 @@ void TIntermAggregate::setBuiltInFunctionPrecision()
     }
     // ESSL 3.0 spec section 8: textureSize always gets highp precision.
     // All other functions that take a sampler are assumed to be texture functions.
-    if (mName.find("textureSize") == 0)
+    if (mName.getString().find("textureSize") == 0)
         mType.setPrecision(EbpHigh);
     else
         mType.setPrecision(precision);
@@ -393,6 +389,75 @@ bool TIntermCase::replaceChildNode(
 {
     REPLACE_IF_IS(mCondition, TIntermTyped, original, replacement);
     return false;
+}
+
+TIntermTyped::TIntermTyped(const TIntermTyped &node) : TIntermNode(), mType(node.mType)
+{
+    // Copy constructor is disallowed for TIntermNode in order to disallow it for subclasses that
+    // don't explicitly allow it, so normal TIntermNode constructor is used to construct the copy.
+    // We need to manually copy any fields of TIntermNode besides handling fields in TIntermTyped.
+    mLine = node.mLine;
+}
+
+TIntermConstantUnion::TIntermConstantUnion(const TIntermConstantUnion &node) : TIntermTyped(node)
+{
+    size_t arraySize   = mType.getObjectSize();
+    mUnionArrayPointer = new TConstantUnion[arraySize];
+    for (size_t i = 0u; i < arraySize; ++i)
+    {
+        mUnionArrayPointer[i] = node.mUnionArrayPointer[i];
+    }
+}
+
+TIntermAggregate::TIntermAggregate(const TIntermAggregate &node)
+    : TIntermOperator(node),
+      mName(node.mName),
+      mUserDefined(node.mUserDefined),
+      mFunctionId(node.mFunctionId),
+      mUseEmulatedFunction(node.mUseEmulatedFunction),
+      mGotPrecisionFromChildren(node.mGotPrecisionFromChildren)
+{
+    for (TIntermNode *child : node.mSequence)
+    {
+        TIntermTyped *typedChild = child->getAsTyped();
+        ASSERT(typedChild != nullptr);
+        TIntermTyped *childCopy = typedChild->deepCopy();
+        mSequence.push_back(childCopy);
+    }
+}
+
+TIntermBinary::TIntermBinary(const TIntermBinary &node)
+    : TIntermOperator(node), mAddIndexClamp(node.mAddIndexClamp)
+{
+    TIntermTyped *leftCopy  = node.mLeft->deepCopy();
+    TIntermTyped *rightCopy = node.mRight->deepCopy();
+    ASSERT(leftCopy != nullptr && rightCopy != nullptr);
+    mLeft  = leftCopy;
+    mRight = rightCopy;
+}
+
+TIntermUnary::TIntermUnary(const TIntermUnary &node)
+    : TIntermOperator(node), mUseEmulatedFunction(node.mUseEmulatedFunction)
+{
+    TIntermTyped *operandCopy = node.mOperand->deepCopy();
+    ASSERT(operandCopy != nullptr);
+    mOperand = operandCopy;
+}
+
+TIntermSelection::TIntermSelection(const TIntermSelection &node) : TIntermTyped(node)
+{
+    // Only supported for ternary nodes, not if statements.
+    TIntermTyped *trueTyped  = node.mTrueBlock->getAsTyped();
+    TIntermTyped *falseTyped = node.mFalseBlock->getAsTyped();
+    ASSERT(trueTyped != nullptr);
+    ASSERT(falseTyped != nullptr);
+    TIntermTyped *conditionCopy = node.mCondition->deepCopy();
+    TIntermTyped *trueCopy      = trueTyped->deepCopy();
+    TIntermTyped *falseCopy = falseTyped->deepCopy();
+    ASSERT(conditionCopy != nullptr && trueCopy != nullptr && falseCopy != nullptr);
+    mCondition  = conditionCopy;
+    mTrueBlock  = trueCopy;
+    mFalseBlock = falseCopy;
 }
 
 //
@@ -2479,9 +2544,20 @@ void TIntermTraverser::updateTree()
     {
         const NodeInsertMultipleEntry &insertion = mInsertions[ii];
         ASSERT(insertion.parent);
-        bool inserted = insertion.parent->insertChildNodes(insertion.position, insertion.insertions);
-        ASSERT(inserted);
-        UNUSED_ASSERTION_VARIABLE(inserted);
+        if (!insertion.insertionsAfter.empty())
+        {
+            bool inserted = insertion.parent->insertChildNodes(insertion.position + 1,
+                                                               insertion.insertionsAfter);
+            ASSERT(inserted);
+            UNUSED_ASSERTION_VARIABLE(inserted);
+        }
+        if (!insertion.insertionsBefore.empty())
+        {
+            bool inserted =
+                insertion.parent->insertChildNodes(insertion.position, insertion.insertionsBefore);
+            ASSERT(inserted);
+            UNUSED_ASSERTION_VARIABLE(inserted);
+        }
     }
     for (size_t ii = 0; ii < mReplacements.size(); ++ii)
     {

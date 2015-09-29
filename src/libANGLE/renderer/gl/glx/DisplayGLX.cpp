@@ -154,10 +154,10 @@ egl::Error DisplayGLX::initialize(egl::Display *display)
     // GLX driver for Parallels VM crashes if attrib list ptr is null
     // We need a non zero width + height or Mesa will complain with an X_CreatePixmap error:
     // BadValue (integer parameter out of range for operation)
-    int pbufferAttribs[] = 
-    { 
-        GLX_PBUFFER_WIDTH, 1, 
-        GLX_PBUFFER_HEIGHT, 1, 
+    int pbufferAttribs[] =
+    {
+        GLX_PBUFFER_WIDTH, 1,
+        GLX_PBUFFER_HEIGHT, 1,
         0
     };
     mDummyPbuffer = mGLX.createPbuffer(mContextConfig, pbufferAttribs);
@@ -207,7 +207,8 @@ SurfaceImpl *DisplayGLX::createWindowSurface(const egl::Config *configuration,
     ASSERT(configIdToGLXConfig.count(configuration->configID) > 0);
     glx::FBConfig fbConfig = configIdToGLXConfig[configuration->configID];
 
-    return new WindowSurfaceGLX(mGLX, this, this->getRenderer(), window, mGLX.getDisplay(), mContext, fbConfig);
+    return new WindowSurfaceGLX(mGLX, this, this->getRenderer(), window, mGLX.getDisplay(),
+                                mContext, fbConfig);
 }
 
 SurfaceImpl *DisplayGLX::createPbufferSurface(const egl::Config *configuration,
@@ -220,7 +221,8 @@ SurfaceImpl *DisplayGLX::createPbufferSurface(const egl::Config *configuration,
     EGLint height = attribs.get(EGL_HEIGHT, 0);
     bool largest  = (attribs.get(EGL_LARGEST_PBUFFER, EGL_FALSE) == EGL_TRUE);
 
-    return new PbufferSurfaceGLX(this->getRenderer(), width, height, largest, mGLX, mContext, fbConfig);
+    return new PbufferSurfaceGLX(this->getRenderer(), width, height, largest, mGLX, mContext,
+                                 fbConfig);
 }
 
 SurfaceImpl* DisplayGLX::createPbufferFromClientBuffer(const egl::Config *configuration,
@@ -393,6 +395,9 @@ egl::ConfigSet DisplayGLX::generateConfigs() const
         int id = configs.add(config);
         configIdToGLXConfig[id] = glxConfig;
     }
+
+    XFree(glxConfigs);
+
     return configs;
 }
 
@@ -457,7 +462,7 @@ const FunctionsGL *DisplayGLX::getFunctionsGL() const
 
 void DisplayGLX::generateExtensions(egl::DisplayExtensions *outExtensions) const
 {
-    // UNIMPLEMENTED();
+    outExtensions->createContext = true;
 }
 
 void DisplayGLX::generateCaps(egl::Caps *outCaps) const

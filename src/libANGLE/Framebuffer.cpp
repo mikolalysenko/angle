@@ -92,7 +92,7 @@ const FramebufferAttachment *Framebuffer::Data::getDepthOrStencilAttachment() co
     return nullptr;
 }
 
-const FramebufferAttachment *Framebuffer::Data::getColorAttachment(unsigned int colorAttachment) const
+const FramebufferAttachment *Framebuffer::Data::getColorAttachment(size_t colorAttachment) const
 {
     ASSERT(colorAttachment < mColorAttachments.size());
     return mColorAttachments[colorAttachment].isAttached() ?
@@ -125,18 +125,14 @@ const FramebufferAttachment *Framebuffer::Data::getDepthStencilAttachment() cons
 }
 
 Framebuffer::Framebuffer(const Caps &caps, rx::ImplFactory *factory, GLuint id)
-    : mData(caps),
-      mImpl(factory->createFramebuffer(mData)),
-      mId(id)
+    : mData(caps), mImpl(factory->createFramebuffer(mData)), mId(id)
 {
     ASSERT(mId != 0);
     ASSERT(mImpl != nullptr);
 }
 
 Framebuffer::Framebuffer(rx::SurfaceImpl *surface)
-    : mData(),
-      mImpl(surface->createDefaultFramebuffer(mData)),
-      mId(0)
+    : mData(), mImpl(surface->createDefaultFramebuffer(mData)), mId(0)
 {
     ASSERT(mImpl != nullptr);
 }
@@ -167,7 +163,7 @@ void Framebuffer::detachResourceById(GLenum resourceType, GLuint resourceId)
     DetachMatchingAttachment(&mData.mStencilAttachment, resourceType, resourceId);
 }
 
-const FramebufferAttachment *Framebuffer::getColorbuffer(unsigned int colorAttachment) const
+const FramebufferAttachment *Framebuffer::getColorbuffer(size_t colorAttachment) const
 {
     return mData.getColorAttachment(colorAttachment);
 }
@@ -267,7 +263,7 @@ void Framebuffer::setReadBuffer(GLenum buffer)
     mImpl->setReadBuffer(buffer);
 }
 
-bool Framebuffer::isEnabledColorAttachment(unsigned int colorAttachment) const
+bool Framebuffer::isEnabledColorAttachment(size_t colorAttachment) const
 {
     ASSERT(colorAttachment < mData.mColorAttachments.size());
     return (mData.mColorAttachments[colorAttachment].isAttached() &&
@@ -287,7 +283,7 @@ bool Framebuffer::hasEnabledColorAttachment() const
     return false;
 }
 
-int Framebuffer::getNumColorBuffers() const
+size_t Framebuffer::getNumColorBuffers() const
 {
     return mData.mColorAttachments.size();
 }

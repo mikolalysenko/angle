@@ -87,7 +87,8 @@ class ImageTest : public ANGLETest
         glGenTextures(1, &source);
         glBindTexture(GL_TEXTURE_2D, source);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, static_cast<GLsizei>(width),
+                     static_cast<GLsizei>(height), 0, format, type, data);
 
         // Disable mipmapping
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -99,7 +100,7 @@ class ImageTest : public ANGLETest
         EGLWindow *window = getEGLWindow();
         EGLImageKHR image =
             eglCreateImageKHR(window->getDisplay(), window->getContext(), EGL_GL_TEXTURE_2D_KHR,
-                              reinterpret_cast<EGLClientBuffer>(source), nullptr);
+                              reinterpretHelper<EGLClientBuffer>(source), nullptr);
 
         ASSERT_EGL_SUCCESS();
 
@@ -122,10 +123,11 @@ class ImageTest : public ANGLETest
         glGenTextures(1, &source);
         glBindTexture(GL_TEXTURE_CUBE_MAP, source);
 
-        for (size_t faceIdx = 0; faceIdx < 6; faceIdx++)
+        for (GLenum faceIdx = 0; faceIdx < 6; faceIdx++)
         {
-            glTexImage2D(faceIdx + GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, format, width, height, 0,
-                         format, type, data + (faceIdx * dataStride));
+            glTexImage2D(faceIdx + GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, format,
+                         static_cast<GLsizei>(width), static_cast<GLsizei>(height), 0, format, type,
+                         data + (faceIdx * dataStride));
         }
 
         // Disable mipmapping
@@ -138,7 +140,7 @@ class ImageTest : public ANGLETest
         EGLWindow *window = getEGLWindow();
         EGLImageKHR image =
             eglCreateImageKHR(window->getDisplay(), window->getContext(), imageTarget,
-                              reinterpret_cast<EGLClientBuffer>(source), nullptr);
+                              reinterpretHelper<EGLClientBuffer>(source), nullptr);
 
         ASSERT_EGL_SUCCESS();
 
@@ -161,7 +163,9 @@ class ImageTest : public ANGLETest
         glGenTextures(1, &source);
         glBindTexture(GL_TEXTURE_3D, source);
 
-        glTexImage3D(GL_TEXTURE_3D, 0, format, width, height, depth, 0, format, type, data);
+        glTexImage3D(GL_TEXTURE_3D, 0, format, static_cast<GLsizei>(width),
+                     static_cast<GLsizei>(height), static_cast<GLsizei>(depth), 0, format, type,
+                     data);
 
         // Disable mipmapping
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -177,7 +181,7 @@ class ImageTest : public ANGLETest
         };
         EGLImageKHR image =
             eglCreateImageKHR(window->getDisplay(), window->getContext(), EGL_GL_TEXTURE_3D_KHR,
-                              reinterpret_cast<EGLClientBuffer>(source), attribs);
+                              reinterpretHelper<EGLClientBuffer>(source), attribs);
 
         ASSERT_EGL_SUCCESS();
 
@@ -196,7 +200,8 @@ class ImageTest : public ANGLETest
         GLuint source;
         glGenRenderbuffers(1, &source);
         glBindRenderbuffer(GL_RENDERBUFFER, source);
-        glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
+        glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, static_cast<GLsizei>(width),
+                              static_cast<GLsizei>(height));
 
         // Create a framebuffer and clear it to set the data
         GLuint framebuffer;
@@ -215,7 +220,7 @@ class ImageTest : public ANGLETest
         EGLWindow *window = getEGLWindow();
         EGLImageKHR image =
             eglCreateImageKHR(window->getDisplay(), window->getContext(), EGL_GL_RENDERBUFFER_KHR,
-                              reinterpret_cast<EGLClientBuffer>(source), nullptr);
+                              reinterpretHelper<EGLClientBuffer>(source), nullptr);
 
         ASSERT_EGL_SUCCESS();
 
@@ -281,6 +286,15 @@ class ImageTest : public ANGLETest
         glDeleteFramebuffers(1, &framebuffer);
     }
 
+    template <typename destType, typename sourcetype>
+    destType reinterpretHelper(sourcetype source)
+    {
+        static_assert(sizeof(destType) == sizeof(size_t),
+                      "destType should be the same size as a size_t");
+        size_t sourceSizeT = static_cast<size_t>(source);
+        return reinterpret_cast<destType>(sourceSizeT);
+    }
+
     GLuint mTextureProgram;
     GLint mTextureUniformLocation;
 
@@ -311,20 +325,20 @@ TEST_P(ImageTest, ValidationImageBase)
     EGLContext context        = window->getContext();
     EGLConfig config          = window->getConfig();
     EGLImageKHR image         = EGL_NO_IMAGE_KHR;
-    EGLClientBuffer texture2D = reinterpret_cast<EGLClientBuffer>(glTexture2D);
+    EGLClientBuffer texture2D = reinterpretHelper<EGLClientBuffer>(glTexture2D);
 
     // Test validation of eglCreateImageKHR
 
     // If <dpy> is not the handle of a valid EGLDisplay object, the error EGL_BAD_DISPLAY is
     // generated.
-    image = eglCreateImageKHR(reinterpret_cast<EGLDisplay>(0xBAADF00D), context,
+    image = eglCreateImageKHR(reinterpretHelper<EGLDisplay>(0xBAADF00D), context,
                               EGL_GL_TEXTURE_2D_KHR, texture2D, nullptr);
     EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
     EXPECT_EGL_ERROR(EGL_BAD_DISPLAY);
 
     // If <ctx> is neither the handle of a valid EGLContext object on <dpy> nor EGL_NO_CONTEXT, the
     // error EGL_BAD_CONTEXT is generated.
-    image = eglCreateImageKHR(display, reinterpret_cast<EGLContext>(0xBAADF00D),
+    image = eglCreateImageKHR(display, reinterpretHelper<EGLContext>(0xBAADF00D),
                               EGL_GL_TEXTURE_2D_KHR, texture2D, nullptr);
     EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
     EXPECT_EGL_ERROR(EGL_BAD_CONTEXT);
@@ -398,13 +412,13 @@ TEST_P(ImageTest, ValidationImageBase)
 
     // If <dpy> is not the handle of a valid EGLDisplay object, the error EGL_BAD_DISPLAY is
     // generated.
-    result = eglDestroyImageKHR(reinterpret_cast<EGLDisplay>(0xBAADF00D), image);
+    result = eglDestroyImageKHR(reinterpretHelper<EGLDisplay>(0xBAADF00D), image);
     EXPECT_EQ(result, static_cast<EGLBoolean>(EGL_FALSE));
     EXPECT_EGL_ERROR(EGL_BAD_DISPLAY);
 
     // If <image> is not a valid EGLImageKHR object created with respect to <dpy>, the error
     // EGL_BAD_PARAMETER is generated.
-    result = eglDestroyImageKHR(display, reinterpret_cast<EGLImageKHR>(0xBAADF00D));
+    result = eglDestroyImageKHR(display, reinterpretHelper<EGLImageKHR>(0xBAADF00D));
     EXPECT_EQ(result, static_cast<EGLBoolean>(EGL_FALSE));
     EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
 
@@ -458,7 +472,7 @@ TEST_P(ImageTest, ValidationGLImage)
         }
 
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(textureCube), nullptr);
+                                  reinterpretHelper<EGLClientBuffer>(textureCube), nullptr);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
 
@@ -476,7 +490,7 @@ TEST_P(ImageTest, ValidationGLImage)
             EGL_GL_TEXTURE_LEVEL_KHR, 0, EGL_NONE,
         };
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(incompleteTexture),
+                                  reinterpretHelper<EGLClientBuffer>(incompleteTexture),
                                   level0Attribute);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
@@ -486,7 +500,7 @@ TEST_P(ImageTest, ValidationGLImage)
         // mipmap level 0 is not specified, the error EGL_BAD_PARAMETER is generated.
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(incompleteTexture), nullptr);
+                                  reinterpretHelper<EGLClientBuffer>(incompleteTexture), nullptr);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
 
@@ -506,7 +520,7 @@ TEST_P(ImageTest, ValidationGLImage)
             EGL_GL_TEXTURE_LEVEL_KHR, 2, EGL_NONE,
         };
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(incompleteTexture),
+                                  reinterpretHelper<EGLClientBuffer>(incompleteTexture),
                                   level2Attribute);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
@@ -522,7 +536,7 @@ TEST_P(ImageTest, ValidationGLImage)
         // If <target> is not one of the values in Table aaa, the error EGL_BAD_PARAMETER is
         // generated.
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(texture2D), nullptr);
+                                  reinterpretHelper<EGLClientBuffer>(texture2D), nullptr);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
     }
@@ -550,7 +564,7 @@ TEST_P(ImageTest, ValidationGLImage)
             EGL_GL_TEXTURE_LEVEL_KHR, 0, EGL_NONE,
         };
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(incompleteTextureCube),
+                                  reinterpretHelper<EGLClientBuffer>(incompleteTextureCube),
                                   level0Attribute);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
@@ -570,7 +584,7 @@ TEST_P(ImageTest, ValidationGLImage)
         // If <target> is not one of the values in Table aaa, the error EGL_BAD_PARAMETER is
         // generated.
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(textureCube), nullptr);
+                                  reinterpretHelper<EGLClientBuffer>(textureCube), nullptr);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
     }
@@ -590,7 +604,7 @@ TEST_P(ImageTest, ValidationGLImage)
             EGL_GL_TEXTURE_ZOFFSET_KHR, 3, EGL_NONE,
         };
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_3D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(texture3D), zOffset3Parameter);
+                                  reinterpretHelper<EGLClientBuffer>(texture3D), zOffset3Parameter);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
 
@@ -598,7 +612,7 @@ TEST_P(ImageTest, ValidationGLImage)
             EGL_GL_TEXTURE_ZOFFSET_KHR, -1, EGL_NONE,
         };
         image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_3D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(texture3D),
+                                  reinterpretHelper<EGLClientBuffer>(texture3D),
                                   zOffsetNegative1Parameter);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
@@ -619,7 +633,7 @@ TEST_P(ImageTest, ValidationGLImage)
 
             image =
                 eglCreateImageKHR(display, context, EGL_GL_TEXTURE_2D_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(texture2D), zOffset0Parameter);
+                                  reinterpretHelper<EGLClientBuffer>(texture2D), zOffset0Parameter);
             EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
             EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
         }
@@ -635,7 +649,7 @@ TEST_P(ImageTest, ValidationGLImage)
             // If <target> is not one of the values in Table aaa, the error EGL_BAD_PARAMETER is
             // generated.
             image = eglCreateImageKHR(display, context, EGL_GL_TEXTURE_3D_KHR,
-                                      reinterpret_cast<EGLClientBuffer>(texture3D), nullptr);
+                                      reinterpretHelper<EGLClientBuffer>(texture3D), nullptr);
             EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
             EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
         }
@@ -676,7 +690,7 @@ TEST_P(ImageTest, ValidationGLImage)
         // If <target> is not one of the values in Table aaa, the error EGL_BAD_PARAMETER is
         // generated.
         image = eglCreateImageKHR(display, context, EGL_GL_RENDERBUFFER_KHR,
-                                  reinterpret_cast<EGLClientBuffer>(renderbuffer), nullptr);
+                                  reinterpretHelper<EGLClientBuffer>(renderbuffer), nullptr);
         EXPECT_EQ(image, EGL_NO_IMAGE_KHR);
         EXPECT_EGL_ERROR(EGL_BAD_PARAMETER);
     }
@@ -712,7 +726,7 @@ TEST_P(ImageTest, ValidationGLEGLImage)
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, reinterpret_cast<GLeglImageOES>(0xBAADF00D));
+    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, reinterpretHelper<GLeglImageOES>(0xBAADF00D));
     EXPECT_GL_ERROR(GL_INVALID_VALUE);
 
     // <target> must be RENDERBUFFER_OES, and <image> must be the handle of a valid EGLImage
@@ -728,7 +742,7 @@ TEST_P(ImageTest, ValidationGLEGLImage)
     glGenRenderbuffers(1, &renderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
     glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER,
-                                           reinterpret_cast<GLeglImageOES>(0xBAADF00D));
+                                           reinterpretHelper<GLeglImageOES>(0xBAADF00D));
     EXPECT_GL_ERROR(GL_INVALID_VALUE);
 
     // Clean up
@@ -838,7 +852,7 @@ TEST_P(ImageTest, SourceCubeTarget2D)
         0,   0, 255, 255, 0,   255, 0,   255, 0,   0, 0, 255,
     };
 
-    for (size_t faceIdx = 0; faceIdx < 6; faceIdx++)
+    for (EGLenum faceIdx = 0; faceIdx < 6; faceIdx++)
     {
         // Create the Image
         GLuint source;
@@ -879,7 +893,7 @@ TEST_P(ImageTest, SourceCubeTargetRenderbuffer)
         0,   0, 255, 255, 0,   255, 0,   255, 0,   0, 0, 255,
     };
 
-    for (size_t faceIdx = 0; faceIdx < 6; faceIdx++)
+    for (EGLenum faceIdx = 0; faceIdx < 6; faceIdx++)
     {
         // Create the Image
         GLuint source;
@@ -1153,8 +1167,8 @@ TEST_P(ImageTest, MipLevels)
 
     for (size_t level = 0; level < mipLevels; level++)
     {
-        glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, textureSize >> level, textureSize >> level, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, data[level]);
+        glTexImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), GL_RGBA, textureSize >> level,
+                     textureSize >> level, 0, GL_RGBA, GL_UNSIGNED_BYTE, data[level]);
     }
 
     ASSERT_GL_NO_ERROR();
@@ -1167,7 +1181,7 @@ TEST_P(ImageTest, MipLevels)
         };
         EGLImageKHR image =
             eglCreateImageKHR(window->getDisplay(), window->getContext(), EGL_GL_TEXTURE_2D_KHR,
-                              reinterpret_cast<EGLClientBuffer>(source), attribs);
+                              reinterpretHelper<EGLClientBuffer>(source), attribs);
         ASSERT_EGL_SUCCESS();
 
         // Create a texture and renderbuffer target

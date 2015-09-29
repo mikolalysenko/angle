@@ -238,8 +238,10 @@ bool canRoundFloat(const TType &type)
 TIntermAggregate *createInternalFunctionCallNode(TString name, TIntermNode *child)
 {
     TIntermAggregate *callNode = new TIntermAggregate();
-    callNode->setOp(EOpInternalFunctionCall);
-    callNode->setName(name);
+    callNode->setOp(EOpFunctionCall);
+    TName nameObj(TFunction::mangleName(name));
+    nameObj.setInternal(true);
+    callNode->setNameObj(nameObj);
     callNode->getSequence()->push_back(child);
     return callNode;
 }
@@ -291,8 +293,9 @@ bool parentUsesResult(TIntermNode* parent, TIntermNode* node)
 
 }  // namespace anonymous
 
-EmulatePrecision::EmulatePrecision()
-    : TIntermTraverser(true, true, true), mDeclaringVariables(false)
+EmulatePrecision::EmulatePrecision(const TSymbolTable &symbolTable, int shaderVersion)
+    : TLValueTrackingTraverser(true, true, true, symbolTable, shaderVersion),
+      mDeclaringVariables(false)
 {}
 
 void EmulatePrecision::visitSymbol(TIntermSymbol *node)

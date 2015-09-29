@@ -226,6 +226,7 @@ class State : angle::NonCopyable
     void setVertexAttribi(GLuint index, const GLint values[4]);
     void setVertexAttribState(unsigned int attribNum, Buffer *boundBuffer, GLint size, GLenum type,
                               bool normalized, bool pureInteger, GLsizei stride, const void *pointer);
+    void setVertexAttribDivisor(GLuint index, GLuint divisor);
     const VertexAttribCurrentValueData &getVertexAttribCurrentValue(unsigned int attribNum) const;
     const void *getVertexAttribPointer(unsigned int attribNum) const;
 
@@ -283,7 +284,6 @@ class State : angle::NonCopyable
         DIRTY_BIT_FRONT_FACE,
         DIRTY_BIT_POLYGON_OFFSET_FILL_ENABLED,
         DIRTY_BIT_POLYGON_OFFSET,
-        DIRTY_BIT_MULTISAMPLE_ENABLED,
         DIRTY_BIT_RASTERIZER_DISCARD_ENABLED,
         DIRTY_BIT_LINE_WIDTH,
         DIRTY_BIT_PRIMITIVE_RESTART_ENABLED,

@@ -73,12 +73,6 @@ class TFieldListCollection : angle::NonCopyable
         return *mFields;
     }
 
-    const TString &mangledName() const
-    {
-        if (mMangledName.empty())
-            mMangledName = buildMangledName();
-        return mMangledName;
-    }
     size_t objectSize() const
     {
         if (mObjectSize == 0)
@@ -93,9 +87,8 @@ class TFieldListCollection : angle::NonCopyable
           mObjectSize(0)
     {
     }
-    TString buildMangledName() const;
+    TString buildMangledName(const TString &mangledNamePrefix) const;
     size_t calculateObjectSize() const;
-    virtual TString mangledNamePrefix() const = 0;
 
     const TString *mName;
     TFieldList *mFields;
@@ -150,6 +143,13 @@ class TStructure : public TFieldListCollection
         return mAtGlobalScope;
     }
 
+    const TString &mangledName() const
+    {
+        if (mMangledName.empty())
+            mMangledName = buildMangledName("struct-");
+        return mMangledName;
+    }
+
   private:
     // TODO(zmo): Find a way to get rid of the const_cast in function
     // setName().  At the moment keep this function private so only
@@ -161,10 +161,6 @@ class TStructure : public TFieldListCollection
         *mutableName = name;
     }
 
-    virtual TString mangledNamePrefix() const
-    {
-        return "struct-";
-    }
     int calculateDeepestNesting() const;
 
     mutable int mDeepestNesting;
@@ -210,13 +206,14 @@ class TInterfaceBlock : public TFieldListCollection
     {
         return mMatrixPacking;
     }
-
-  private:
-    virtual TString mangledNamePrefix() const
+    const TString &mangledName() const
     {
-        return "iblock-";
+        if (mMangledName.empty())
+            mMangledName = buildMangledName("iblock-");
+        return mMangledName;
     }
 
+  private:
     const TString *mInstanceName; // for interface block instance names
     int mArraySize; // 0 if not an array
     TLayoutBlockStorage mBlockStorage;
@@ -268,6 +265,9 @@ class TType
           interfaceBlock(interfaceBlockIn), structure(0)
     {
     }
+
+    TType(const TType &) = default;
+    TType &operator=(const TType &) = default;
 
     TBasicType getBasicType() const
     {

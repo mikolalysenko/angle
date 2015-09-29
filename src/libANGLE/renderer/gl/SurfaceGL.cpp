@@ -14,9 +14,7 @@
 namespace rx
 {
 
-SurfaceGL::SurfaceGL(RendererGL *renderer)
-    : SurfaceImpl(),
-      mRenderer(renderer)
+SurfaceGL::SurfaceGL(RendererGL *renderer) : SurfaceImpl(), mRenderer(renderer)
 {
 }
 
@@ -28,5 +26,4 @@ FramebufferImpl *SurfaceGL::createDefaultFramebuffer(const gl::Framebuffer::Data
 {
     return new FramebufferGL(data, mRenderer->getFunctions(), mRenderer->getStateManager(), true);
 }
-
 }

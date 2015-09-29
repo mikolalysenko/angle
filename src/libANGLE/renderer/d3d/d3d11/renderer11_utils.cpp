@@ -12,15 +12,16 @@
 #include <algorithm>
 
 #include "common/debug.h"
+#include "libANGLE/formatutils.h"
 #include "libANGLE/Framebuffer.h"
 #include "libANGLE/Program.h"
-#include "libANGLE/formatutils.h"
-#include "libANGLE/renderer/d3d/WorkaroundsD3D.h"
-#include "libANGLE/renderer/d3d/FramebufferD3D.h"
-#include "libANGLE/renderer/d3d/d3d11/Renderer11.h"
-#include "libANGLE/renderer/d3d/d3d11/RenderTarget11.h"
 #include "libANGLE/renderer/d3d/d3d11/dxgi_support_table.h"
 #include "libANGLE/renderer/d3d/d3d11/formatutils11.h"
+#include "libANGLE/renderer/d3d/d3d11/Renderer11.h"
+#include "libANGLE/renderer/d3d/d3d11/RenderTarget11.h"
+#include "libANGLE/renderer/d3d/d3d11/texture_format_table.h"
+#include "libANGLE/renderer/d3d/FramebufferD3D.h"
+#include "libANGLE/renderer/d3d/WorkaroundsD3D.h"
 
 namespace rx
 {
@@ -275,6 +276,48 @@ class DXGISupportHelper : angle::NonCopyable
 };
 
 } // anonymous namespace
+
+unsigned int GetReservedVertexUniformVectors(D3D_FEATURE_LEVEL featureLevel)
+{
+    switch (featureLevel)
+    {
+        case D3D_FEATURE_LEVEL_11_1:
+        case D3D_FEATURE_LEVEL_11_0:
+        case D3D_FEATURE_LEVEL_10_1:
+        case D3D_FEATURE_LEVEL_10_0:
+            return 0;
+
+        case D3D_FEATURE_LEVEL_9_3:
+        case D3D_FEATURE_LEVEL_9_2:
+        case D3D_FEATURE_LEVEL_9_1:
+            return 2;  // dx_ViewAdjust and dx_ViewCoords
+
+        default:
+            UNREACHABLE();
+            return 0;
+    }
+}
+
+unsigned int GetReservedFragmentUniformVectors(D3D_FEATURE_LEVEL featureLevel)
+{
+    switch (featureLevel)
+    {
+        case D3D_FEATURE_LEVEL_11_1:
+        case D3D_FEATURE_LEVEL_11_0:
+        case D3D_FEATURE_LEVEL_10_1:
+        case D3D_FEATURE_LEVEL_10_0:
+            return 0;
+
+        case D3D_FEATURE_LEVEL_9_3:
+        case D3D_FEATURE_LEVEL_9_2:
+        case D3D_FEATURE_LEVEL_9_1:
+            return 2;
+
+        default:
+            UNREACHABLE();
+            return 0;
+    }
+}
 
 GLint GetMaximumClientVersion(D3D_FEATURE_LEVEL featureLevel)
 {
@@ -702,7 +745,8 @@ static size_t GetMaximumVertexUniformVectors(D3D_FEATURE_LEVEL featureLevel)
       // From http://msdn.microsoft.com/en-us/library/windows/desktop/ff476149.aspx ID3D11DeviceContext::VSSetConstantBuffers
       case D3D_FEATURE_LEVEL_9_3:
       case D3D_FEATURE_LEVEL_9_2:
-      case D3D_FEATURE_LEVEL_9_1:  return 255;
+      case D3D_FEATURE_LEVEL_9_1:
+          return 255 - d3d11_gl::GetReservedVertexUniformVectors(featureLevel);
 
       default: UNREACHABLE();      return 0;
     }
@@ -818,7 +862,8 @@ static size_t GetMaximumPixelUniformVectors(D3D_FEATURE_LEVEL featureLevel)
       // From http://msdn.microsoft.com/en-us/library/windows/desktop/ff476149.aspx ID3D11DeviceContext::PSSetConstantBuffers
       case D3D_FEATURE_LEVEL_9_3:
       case D3D_FEATURE_LEVEL_9_2:
-      case D3D_FEATURE_LEVEL_9_1:  return 32;
+      case D3D_FEATURE_LEVEL_9_1:
+          return 32 - d3d11_gl::GetReservedFragmentUniformVectors(featureLevel);
 
       default: UNREACHABLE();      return 0;
     }
@@ -1167,6 +1212,7 @@ void GenerateCaps(ID3D11Device *device, ID3D11DeviceContext *deviceContext, cons
     extensions->translatedShaderSource = true;
     extensions->fboRenderMipmap = false;
     extensions->debugMarker = true;
+    extensions->eglImage                 = true;
 
     // D3D11 Feature Level 10_0+ uses SV_IsFrontFace in HLSL to emulate gl_FrontFacing.
     // D3D11 Feature Level 9_3 doesn't support SV_IsFrontFace, and has no equivalent, so can't support gl_FrontFacing.
@@ -1174,6 +1220,19 @@ void GenerateCaps(ID3D11Device *device, ID3D11DeviceContext *deviceContext, cons
 
     // D3D11 Feature Level 9_3 doesn't support alpha-to-coverage
     limitations->noSampleAlphaToCoverageSupport = (renderer11DeviceCaps.featureLevel <= D3D_FEATURE_LEVEL_9_3);
+
+    // D3D11 Feature Levels 9_3 and below do not support non-constant loop indexing and require
+    // additional
+    // pre-validation of the shader at compile time to produce a better error message.
+    limitations->shadersRequireIndexedLoopValidation =
+        (renderer11DeviceCaps.featureLevel <= D3D_FEATURE_LEVEL_9_3);
+
+    // D3D11 has no concept of separate masks and refs for front and back faces in the depth stencil
+    // state.
+    limitations->noSeparateStencilRefsAndMasks = true;
+
+    // D3D11 cannot support constant color and alpha blend funcs together
+    limitations->noSimultaneousConstantColorAndAlphaBlendFunc = true;
 
 #ifdef ANGLE_ENABLE_WINDOWS_STORE
     // Setting a non-zero divisor on attribute zero doesn't work on certain Windows Phone 8-era devices.

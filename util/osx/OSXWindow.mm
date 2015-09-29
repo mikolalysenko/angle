@@ -85,7 +85,7 @@ static bool InitializeAppKit()
     return true;
 }
 
-// NS's abd CG's coordinate system starts at the bottom left, while OSWindow's coordinate
+// NS's and CG's coordinate systems start at the bottom left, while OSWindow's coordinate
 // system starts at the top left. This function converts the Y coordinate accordingly.
 static float YCoordToFromCG(float y)
 {
@@ -546,7 +546,7 @@ bool OSXWindow::initialize(const std::string &name, size_t width, size_t height)
     {
         return false;
     }
-    [mView setWantsLayer: YES];
+    [mView setWantsLayer:YES];
 
     [mWindow setContentView: mView];
     [mWindow setTitle: [NSString stringWithUTF8String: name.c_str()]];
@@ -583,7 +583,7 @@ EGLNativeWindowType OSXWindow::getNativeWindow() const
 
 EGLNativeDisplayType OSXWindow::getNativeDisplay() const
 {
-    //TODO(cwallez): implement it once we have defined what EGLNativeDisplayType is
+    // TODO(cwallez): implement it once we have defined what EGLNativeDisplayType is
     return static_cast<EGLNativeDisplayType>(0);
 }
 
@@ -609,7 +609,13 @@ void OSXWindow::messageLoop()
 void OSXWindow::setMousePosition(int x, int y)
 {
     y = [mWindow frame].size.height - y -1;
-    NSPoint screenspace = [mWindow convertRectToScreen: NSMakeRect(x, y, 0, 0)].origin;
+    NSPoint screenspace;
+
+    #if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_7
+        screenspace = [mWindow convertBaseToScreen: NSMakePoint(x, y)];
+    #else
+        screenspace = [mWindow convertRectToScreen: NSMakeRect(x, y, 0, 0)].origin;
+    #endif
     CGWarpMouseCursorPosition(CGPointMake(screenspace.x, YCoordToFromCG(screenspace.y)));
 }
 

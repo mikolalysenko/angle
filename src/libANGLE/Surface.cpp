@@ -74,6 +74,7 @@ Surface::~Surface()
         mTexture.set(nullptr);
     }
 
+    SafeDelete(mDefaultFramebuffer);
     SafeDelete(mImplementation);
 }
 
@@ -227,19 +228,21 @@ gl::Framebuffer *Surface::createDefaultFramebuffer()
     framebuffer->setDrawBuffers(1, &drawBufferState);
     framebuffer->setReadBuffer(GL_BACK);
 
-    framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_BACK, gl::ImageIndex::MakeInvalid(), this);
+    framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_BACK, gl::ImageIndex::MakeInvalid(),
+                               this);
 
     if (mConfig->depthSize > 0)
     {
-        framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_DEPTH, gl::ImageIndex::MakeInvalid(), this);
+        framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_DEPTH, gl::ImageIndex::MakeInvalid(),
+                                   this);
     }
 
     if (mConfig->stencilSize > 0)
     {
-        framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_STENCIL, gl::ImageIndex::MakeInvalid(), this);
+        framebuffer->setAttachment(GL_FRAMEBUFFER_DEFAULT, GL_STENCIL,
+                                   gl::ImageIndex::MakeInvalid(), this);
     }
 
     return framebuffer;
 }
-
 }

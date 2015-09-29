@@ -7,20 +7,16 @@
 #ifndef UTIL_EGLWINDOW_H_
 #define UTIL_EGLWINDOW_H_
 
-#define GL_GLEXT_PROTOTYPES
-#define EGL_EGLEXT_PROTOTYPES
+#include <list>
+#include <memory>
+#include <stdint.h>
+#include <string>
 
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-
-#include <string>
-#include <list>
-#include <cstdint>
-#include <memory>
 
 #include "common/angleutils.h"
 
@@ -50,11 +46,12 @@ bool operator==(const EGLPlatformParameters &a, const EGLPlatformParameters &b);
 class EGLWindow : angle::NonCopyable
 {
   public:
-    EGLWindow(EGLint glesMajorVersion, const EGLPlatformParameters &platform);
+    EGLWindow(EGLint glesMajorVersion,
+              EGLint glesMinorVersion,
+              const EGLPlatformParameters &platform);
 
     ~EGLWindow();
 
-    void setClientVersion(EGLint glesMajorVersion) { mClientVersion = glesMajorVersion; }
     void setConfigRedBits(int bits) { mRedBits = bits; }
     void setConfigGreenBits(int bits) { mGreenBits = bits; }
     void setConfigBlueBits(int bits) { mBlueBits = bits; }
@@ -68,7 +65,8 @@ class EGLWindow : angle::NonCopyable
 
     void swap();
 
-    EGLint getClientVersion() const { return mClientVersion; }
+    EGLint getClientMajorVersion() const { return mClientMajorVersion; }
+    EGLint getClientMinorVersion() const { return mClientMinorVersion; }
     const EGLPlatformParameters &getPlatform() const { return mPlatform; }
     EGLConfig getConfig() const;
     EGLDisplay getDisplay() const;
@@ -93,7 +91,8 @@ class EGLWindow : angle::NonCopyable
     EGLSurface mSurface;
     EGLContext mContext;
 
-    EGLint mClientVersion;
+    EGLint mClientMajorVersion;
+    EGLint mClientMinorVersion;
     EGLPlatformParameters mPlatform;
     int mRedBits;
     int mGreenBits;

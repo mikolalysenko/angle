@@ -34,8 +34,9 @@ static void PrintVariable(const std::string &prefix, size_t index, const sh::Sha
 static void PrintActiveVariables(ShHandle compiler);
 
 // If NUM_SOURCE_STRINGS is set to a value > 1, the input file data is
-// broken into that many chunks.
-const unsigned int NUM_SOURCE_STRINGS = 2;
+// broken into that many chunks. This will affect file/line numbering in
+// the preprocessor.
+const unsigned int NUM_SOURCE_STRINGS = 1;
 typedef std::vector<char *> ShaderSource;
 static bool ReadShaderSource(const char *fileName, ShaderSource &source);
 static void FreeShaderSource(ShaderSource &source);
@@ -401,8 +402,8 @@ void PrintVariable(const std::string &prefix, size_t index, const sh::ShaderVari
       default: typeName = "UNKNOWN"; break;
     }
 
-    printf("%s %lu : name=%s, type=%s, arraySize=%u\n",
-           prefix.c_str(), index, var.name.c_str(), typeName.c_str(), var.arraySize);
+    printf("%s %u : name=%s, type=%s, arraySize=%u\n", prefix.c_str(),
+           static_cast<unsigned int>(index), var.name.c_str(), typeName.c_str(), var.arraySize);
     if (var.fields.size())
     {
         std::string structPrefix;
@@ -420,7 +421,7 @@ static void PrintActiveVariables(ShHandle compiler)
     const std::vector<sh::Uniform> *uniforms = ShGetUniforms(compiler);
     const std::vector<sh::Varying> *varyings = ShGetVaryings(compiler);
     const std::vector<sh::Attribute> *attributes = ShGetAttributes(compiler);
-    const std::vector<sh::Attribute> *outputs = ShGetOutputVariables(compiler);
+    const std::vector<sh::OutputVariable> *outputs = ShGetOutputVariables(compiler);
     for (size_t varCategory = 0; varCategory < 4; ++varCategory)
     {
         size_t numVars = 0;
