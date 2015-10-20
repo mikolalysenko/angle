@@ -200,6 +200,8 @@
             'libANGLE/renderer/d3d/loadimage.h',
             'libANGLE/renderer/d3d/loadimage.inl',
             'libANGLE/renderer/d3d/loadimageSSE2.cpp',
+            'libANGLE/renderer/d3d/loadimage_etc.cpp',
+            'libANGLE/renderer/d3d/loadimage_etc.h',
             'libANGLE/renderer/d3d/ProgramD3D.cpp',
             'libANGLE/renderer/d3d/ProgramD3D.h',
             'libANGLE/renderer/d3d/RenderbufferD3D.cpp',
@@ -780,10 +782,6 @@
                 }],
                 ['angle_build_winrt==1',
                 {
-                    'defines':
-                    [
-                        'NTDDI_VERSION=NTDDI_WINBLUE',
-                    ],
                     'msvs_requires_importlibrary' : 'true',
                     'msvs_settings':
                     {

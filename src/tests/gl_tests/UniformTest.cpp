@@ -170,36 +170,35 @@ TEST_P(UniformTest, UniformArrayLocations)
 // Test that float to integer GetUniform rounds values correctly.
 TEST_P(UniformTest, FloatUniformStateQuery)
 {
-    std::vector<GLfloat> inValues;
+    std::vector<double> inValues;
     std::vector<GLfloat> expectedFValues;
     std::vector<GLint> expectedIValues;
 
-    GLfloat intMaxF = static_cast<GLfloat>(std::numeric_limits<GLint>::max());
-    GLfloat intMinF = static_cast<GLfloat>(std::numeric_limits<GLint>::min());
+    double intMaxD = static_cast<double>(std::numeric_limits<GLint>::max());
+    double intMinD = static_cast<double>(std::numeric_limits<GLint>::min());
 
     // TODO(jmadill): Investigate rounding of .5
+    inValues.push_back(-1.0);
+    inValues.push_back(-0.6);
+    // inValues.push_back(-0.5); // undefined behaviour?
+    inValues.push_back(-0.4);
+    inValues.push_back(0.0);
+    inValues.push_back(0.4);
+    // inValues.push_back(0.5); // undefined behaviour?
+    inValues.push_back(0.6);
+    inValues.push_back(1.0);
+    inValues.push_back(999999.2);
+    inValues.push_back(intMaxD * 2.0);
+    inValues.push_back(intMaxD + 1.0);
+    inValues.push_back(intMinD * 2.0);
+    inValues.push_back(intMinD - 1.0);
 
-    inValues.push_back(-1.0f);
-    inValues.push_back(-0.6f);
-    // inValues.push_back(-0.5f); // undefined behaviour?
-    inValues.push_back(-0.4f);
-    inValues.push_back(0.0f);
-    inValues.push_back(0.4f);
-    // inValues.push_back(0.5f); // undefined behaviour?
-    inValues.push_back(0.6f);
-    inValues.push_back(1.0f);
-    inValues.push_back(999999.2f);
-    inValues.push_back(intMaxF * 2.0f);
-    inValues.push_back(intMaxF + 1.0f);
-    inValues.push_back(intMinF * 2.0f);
-    inValues.push_back(intMinF - 1.0f);
-
-    for (GLfloat value : inValues)
+    for (double value : inValues)
     {
-        expectedFValues.push_back(value);
+        expectedFValues.push_back(static_cast<GLfloat>(value));
 
-        GLfloat clampedValue = std::max(intMinF, std::min(intMaxF, value));
-        GLfloat rounded = roundf(clampedValue);
+        double clampedValue = std::max(intMinD, std::min(intMaxD, value));
+        double rounded = round(clampedValue);
         expectedIValues.push_back(static_cast<GLint>(rounded));
     }
 
@@ -208,7 +207,7 @@ TEST_P(UniformTest, FloatUniformStateQuery)
 
     for (size_t index = 0; index < inValues.size(); ++index)
     {
-        GLfloat inValue       = inValues[index];
+        GLfloat inValue       = static_cast<GLfloat>(inValues[index]);
         GLfloat expectedValue = expectedFValues[index];
 
         glUniform1f(mUniformFLocation, inValue);
@@ -220,7 +219,7 @@ TEST_P(UniformTest, FloatUniformStateQuery)
 
     for (size_t index = 0; index < inValues.size(); ++index)
     {
-        GLfloat inValue     = inValues[index];
+        GLfloat inValue     = static_cast<GLfloat>(inValues[index]);
         GLint expectedValue = expectedIValues[index];
 
         glUniform1f(mUniformFLocation, inValue);
@@ -455,6 +454,15 @@ TEST_P(UniformTestES3, TranposedMatrixArrayUniformStateQuery)
 // Check that sampler uniforms only show up one time in the list
 TEST_P(UniformTest, SamplerUniformsAppearOnce)
 {
+    int maxVertexTextureImageUnits = 0;
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxVertexTextureImageUnits);
+
+    if (maxVertexTextureImageUnits == 0)
+    {
+        std::cout << "Renderer doesn't support vertex texture fetch, skipping test" << std::endl;
+        return;
+    }
+
     const std::string &vertShader =
         "attribute vec2 position;\n"
         "uniform sampler2D tex2D;\n"
@@ -493,7 +501,7 @@ TEST_P(UniformTest, SamplerUniformsAppearOnce)
 }
 
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these tests should be run against.
-ANGLE_INSTANTIATE_TEST(UniformTest, ES2_D3D9(), ES2_D3D11(), ES2_OPENGL());
+ANGLE_INSTANTIATE_TEST(UniformTest, ES2_D3D9(), ES2_D3D11(), ES2_D3D11_FL9_3(), ES2_OPENGL());
 ANGLE_INSTANTIATE_TEST(UniformTestES3, ES3_D3D11(), ES3_OPENGL());
 
 } // namespace

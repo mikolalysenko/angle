@@ -12,12 +12,17 @@
 #include "libANGLE/Compiler.h"
 #include "libANGLE/renderer/gl/FunctionsGL.h"
 #include "libANGLE/renderer/gl/RendererGL.h"
+#include "libANGLE/renderer/gl/WorkaroundsGL.h"
+
+#include <iostream>
 
 namespace rx
 {
 
-ShaderGL::ShaderGL(const gl::Shader::Data &data, const FunctionsGL *functions)
-    : ShaderImpl(data), mFunctions(functions), mShaderID(0)
+ShaderGL::ShaderGL(const gl::Shader::Data &data,
+                   const FunctionsGL *functions,
+                   const WorkaroundsGL &workarounds)
+    : ShaderImpl(data), mFunctions(functions), mWorkarounds(workarounds), mShaderID(0)
 {
     ASSERT(mFunctions);
 }
@@ -31,7 +36,8 @@ ShaderGL::~ShaderGL()
     }
 }
 
-int ShaderGL::prepareSourceAndReturnOptions(std::stringstream *sourceStream)
+int ShaderGL::prepareSourceAndReturnOptions(std::stringstream *sourceStream,
+                                            std::string * /*sourcePath*/)
 {
     // Reset the previous state
     if (mShaderID != 0)
@@ -42,7 +48,14 @@ int ShaderGL::prepareSourceAndReturnOptions(std::stringstream *sourceStream)
 
     *sourceStream << mData.getSource();
 
-    return SH_INIT_GL_POSITION;
+    int options = SH_INIT_GL_POSITION;
+
+    if (mWorkarounds.doWhileGLSLCausesGPUHang)
+    {
+        options |= SH_REWRITE_DO_WHILE_LOOPS;
+    }
+
+    return options;
 }
 
 bool ShaderGL::postTranslateCompile(gl::Compiler *compiler, std::string *infoLog)

@@ -243,15 +243,22 @@ bool ValidMipLevel(const Context *context, GLenum target, GLint level)
     return level <= gl::log2(static_cast<int>(maxDimension));
 }
 
-bool ValidImageSize(const Context *context, GLenum target, GLint level,
-                    GLsizei width, GLsizei height, GLsizei depth)
+bool ValidImageSizeParameters(const Context *context,
+                              GLenum target,
+                              GLint level,
+                              GLsizei width,
+                              GLsizei height,
+                              GLsizei depth,
+                              bool isSubImage)
 {
     if (level < 0 || width < 0 || height < 0 || depth < 0)
     {
         return false;
     }
 
-    if (!context->getExtensions().textureNPOT &&
+    // TexSubImage parameters can be NPOT without textureNPOT extension,
+    // as long as the destination texture is POT.
+    if (!isSubImage && !context->getExtensions().textureNPOT &&
         (level != 0 && (!gl::isPow2(width) || !gl::isPow2(height) || !gl::isPow2(depth))))
     {
         return false;
@@ -1057,7 +1064,9 @@ bool ValidateReadPixelsParameters(gl::Context *context, GLint x, GLint y, GLsize
     GLenum sizedInternalFormat = GetSizedInternalFormat(format, type);
     const InternalFormat &sizedFormatInfo = GetInternalFormatInfo(sizedInternalFormat);
 
-    GLsizei outputPitch = sizedFormatInfo.computeRowPitch(type, width, context->getState().getPackAlignment(), 0);
+    GLsizei outputPitch =
+        sizedFormatInfo.computeRowPitch(type, width, context->getState().getPackAlignment(),
+                                        context->getState().getPackRowLength());
     // sized query sanity check
     if (bufSize)
     {
@@ -1491,10 +1500,16 @@ static bool ValidateDrawBase(Context *context, GLenum mode, GLsizei count, GLsiz
 
     if (context->getLimitations().noSeparateStencilRefsAndMasks)
     {
-        const gl::DepthStencilState &depthStencilState = state.getDepthStencilState();
-        if (depthStencilState.stencilWritemask != depthStencilState.stencilBackWritemask ||
+        const Framebuffer *framebuffer             = context->getState().getDrawFramebuffer();
+        const FramebufferAttachment *stencilBuffer = framebuffer->getStencilbuffer();
+        GLuint stencilBits                         = stencilBuffer ? stencilBuffer->getStencilSize() : 0;
+        GLuint minimumRequiredStencilMask          = (1 << stencilBits) - 1;
+        const DepthStencilState &depthStencilState = state.getDepthStencilState();
+        if ((depthStencilState.stencilWritemask & minimumRequiredStencilMask) !=
+                (depthStencilState.stencilBackWritemask & minimumRequiredStencilMask) ||
             state.getStencilRef() != state.getStencilBackRef() ||
-            depthStencilState.stencilMask != depthStencilState.stencilBackMask)
+            (depthStencilState.stencilMask & minimumRequiredStencilMask) !=
+                (depthStencilState.stencilBackMask & minimumRequiredStencilMask))
         {
             // Note: these separate values are not supported in WebGL, due to D3D's limitations. See
             // Section 6.10 of the WebGL 1.0 spec
@@ -1531,17 +1546,17 @@ static bool ValidateDrawBase(Context *context, GLenum mode, GLsizei count, GLsiz
     {
         const gl::UniformBlock &uniformBlock = program->getUniformBlockByIndex(uniformBlockIndex);
         GLuint blockBinding = program->getUniformBlockBinding(uniformBlockIndex);
-        const gl::Buffer *uniformBuffer = state.getIndexedUniformBuffer(blockBinding);
+        const OffsetBindingPointer<Buffer> &uniformBuffer =
+            state.getIndexedUniformBuffer(blockBinding);
 
-        if (!uniformBuffer)
+        if (uniformBuffer.get() == nullptr)
         {
             // undefined behaviour
             context->recordError(Error(GL_INVALID_OPERATION, "It is undefined behaviour to have a used but unbound uniform buffer."));
             return false;
         }
 
-        size_t uniformBufferSize = state.getIndexedUniformBufferSize(blockBinding);
-
+        size_t uniformBufferSize = uniformBuffer.getSize();
         if (uniformBufferSize == 0)
         {
             // Bind the whole buffer.

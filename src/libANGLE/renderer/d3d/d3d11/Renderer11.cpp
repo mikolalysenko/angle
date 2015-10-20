@@ -239,7 +239,8 @@ Renderer11::Renderer11(egl::Display *display)
     : RendererD3D(display),
       mStateCache(this),
       mLastHistogramUpdateTime(ANGLEPlatformCurrent()->monotonicallyIncreasingTime()),
-      mDebug(nullptr)
+      mDebug(nullptr),
+      mCurStencilSize(0)
 {
     mVertexDataManager = NULL;
     mIndexDataManager = NULL;
@@ -1008,13 +1009,14 @@ gl::Error Renderer11::setUniformBuffers(const gl::Data &data,
             continue;
         }
 
-        gl::Buffer *uniformBuffer = data.state->getIndexedUniformBuffer(binding);
-        GLintptr uniformBufferOffset = data.state->getIndexedUniformBufferOffset(binding);
-        GLsizeiptr uniformBufferSize = data.state->getIndexedUniformBufferSize(binding);
+        const OffsetBindingPointer<gl::Buffer> &uniformBuffer =
+            data.state->getIndexedUniformBuffer(binding);
+        GLintptr uniformBufferOffset = uniformBuffer.getOffset();
+        GLsizeiptr uniformBufferSize = uniformBuffer.getSize();
 
-        if (uniformBuffer)
+        if (uniformBuffer.get() != nullptr)
         {
-            Buffer11 *bufferStorage = GetImplAs<Buffer11>(uniformBuffer);
+            Buffer11 *bufferStorage = GetImplAs<Buffer11>(uniformBuffer.get());
             ID3D11Buffer *constantBuffer;
 
             if (mRenderer11DeviceCaps.supportsConstantBufferOffsets)
@@ -1068,13 +1070,14 @@ gl::Error Renderer11::setUniformBuffers(const gl::Data &data,
             continue;
         }
 
-        gl::Buffer *uniformBuffer = data.state->getIndexedUniformBuffer(binding);
-        GLintptr uniformBufferOffset = data.state->getIndexedUniformBufferOffset(binding);
-        GLsizeiptr uniformBufferSize = data.state->getIndexedUniformBufferSize(binding);
+        const OffsetBindingPointer<gl::Buffer> &uniformBuffer =
+            data.state->getIndexedUniformBuffer(binding);
+        GLintptr uniformBufferOffset = uniformBuffer.getOffset();
+        GLsizeiptr uniformBufferSize = uniformBuffer.getSize();
 
-        if (uniformBuffer)
+        if (uniformBuffer.get() != nullptr)
         {
-            Buffer11 *bufferStorage = GetImplAs<Buffer11>(uniformBuffer);
+            Buffer11 *bufferStorage = GetImplAs<Buffer11>(uniformBuffer.get());
             ID3D11Buffer *constantBuffer;
 
             if (mRenderer11DeviceCaps.supportsConstantBufferOffsets)
@@ -1196,9 +1199,17 @@ gl::Error Renderer11::setDepthStencilState(const gl::DepthStencilState &depthSte
         memcmp(&depthStencilState, &mCurDepthStencilState, sizeof(gl::DepthStencilState)) != 0 ||
         stencilRef != mCurStencilRef || stencilBackRef != mCurStencilBackRef)
     {
-        ASSERT(depthStencilState.stencilWritemask == depthStencilState.stencilBackWritemask);
+        // get the maximum size of the stencil ref
+        unsigned int maxStencil = 0;
+        if (depthStencilState.stencilTest && mCurStencilSize > 0)
+        {
+            maxStencil = (1 << mCurStencilSize) - 1;
+        }
+        ASSERT((depthStencilState.stencilWritemask & maxStencil) ==
+               (depthStencilState.stencilBackWritemask & maxStencil));
         ASSERT(stencilRef == stencilBackRef);
-        ASSERT(depthStencilState.stencilMask == depthStencilState.stencilBackMask);
+        ASSERT((depthStencilState.stencilMask & maxStencil) ==
+               (depthStencilState.stencilBackMask & maxStencil));
 
         ID3D11DepthStencilState *dxDepthStencilState = NULL;
         gl::Error error = mStateCache.getDepthStencilState(depthStencilState, &dxDepthStencilState);
@@ -1497,6 +1508,13 @@ gl::Error Renderer11::applyRenderTarget(const gl::Framebuffer *framebuffer)
             // because a rendertarget is never compressed.
             unsetConflictingSRVs(gl::SAMPLER_VERTEX, depthStencilResource, index);
             unsetConflictingSRVs(gl::SAMPLER_PIXEL, depthStencilResource, index);
+        }
+
+        unsigned int stencilSize = depthStencil->getStencilSize();
+        if (!mDepthStencilInitialized || stencilSize != mCurStencilSize)
+        {
+            mCurStencilSize            = stencilSize;
+            mForceSetDepthStencilState = true;
         }
     }
 
@@ -3149,6 +3167,15 @@ gl::Error Renderer11::compileToExecutable(gl::InfoLog &infoLog, const std::strin
     configs.push_back(CompileConfig(flags,                                "default"          ));
     configs.push_back(CompileConfig(flags | D3DCOMPILE_SKIP_VALIDATION,   "skip validation"  ));
     configs.push_back(CompileConfig(flags | D3DCOMPILE_SKIP_OPTIMIZATION, "skip optimization"));
+
+    if (getMajorShaderModel() == 4 && getShaderModelSuffix() != "")
+    {
+        // Some shaders might cause a "blob content mismatch between level9 and d3d10 shader".
+        // e.g. dEQP-GLES2.functional.shaders.struct.local.loop_nested_struct_array_*.
+        // Using the [unroll] directive works around this, as does this D3DCompile flag.
+        configs.push_back(
+            CompileConfig(flags | D3DCOMPILE_AVOID_FLOW_CONTROL, "avoid flow control"));
+    }
 
     D3D_SHADER_MACRO loopMacros[] = { {"ANGLE_ENABLE_LOOP_FLATTEN", "1"}, {0, 0} };
 

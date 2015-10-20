@@ -16,6 +16,7 @@
 #include "compiler/translator/RegenerateStructNames.h"
 #include "compiler/translator/RemovePow.h"
 #include "compiler/translator/RenameFunction.h"
+#include "compiler/translator/RewriteDoWhile.h"
 #include "compiler/translator/ScalarizeVecAndMatConstructorArgs.h"
 #include "compiler/translator/UnfoldShortCircuitAST.h"
 #include "compiler/translator/ValidateLimitations.h"
@@ -143,7 +144,8 @@ TCompiler::TCompiler(sh::GLenum type, ShShaderSpec spec, ShShaderOutput output)
       fragmentPrecisionHigh(false),
       clampingStrategy(SH_CLAMP_WITH_CLAMP_INTRINSIC),
       builtInFunctionEmulator(),
-      mSourcePath(NULL)
+      mSourcePath(NULL),
+      mTemporaryIndex(0)
 {
 }
 
@@ -217,7 +219,7 @@ TIntermNode *TCompiler::compileTreeImpl(const char *const shaderStrings[],
                                shaderType, shaderSpec, compileOptions, true,
                                infoSink, debugShaderPrecision);
 
-    parseContext.setFragmentPrecisionHigh(fragmentPrecisionHigh);
+    parseContext.setFragmentPrecisionHighOnESSL1(fragmentPrecisionHigh);
     SetGlobalParseContext(&parseContext);
 
     // We preserve symbols at the built-in level from compile-to-compile.
@@ -249,6 +251,9 @@ TIntermNode *TCompiler::compileTreeImpl(const char *const shaderStrings[],
 
         root = parseContext.getTreeRoot();
         root = intermediate.postProcess(root);
+
+        // Highp might have been auto-enabled based on shader version
+        fragmentPrecisionHigh = parseContext.getFragmentPrecisionHigh();
 
         // Disallow expressions deemed too complex.
         if (success && (compileOptions & SH_LIMIT_EXPRESSION_COMPLEXITY))
@@ -319,6 +324,10 @@ TIntermNode *TCompiler::compileTreeImpl(const char *const shaderStrings[],
 
         if (success && shaderType == GL_VERTEX_SHADER && (compileOptions & SH_INIT_GL_POSITION))
             initializeGLPosition(root);
+
+        // This pass might emit short circuits so keep it before the short circuit unfolding
+        if (success && (compileOptions & SH_REWRITE_DO_WHILE_LOOPS))
+            RewriteDoWhile(root, getTemporaryIndex());
 
         if (success && (compileOptions & SH_UNFOLD_SHORT_CIRCUIT))
         {
@@ -503,6 +512,7 @@ void TCompiler::clearResults()
     nameMap.clear();
 
     mSourcePath = NULL;
+    mTemporaryIndex = 0;
 }
 
 bool TCompiler::initCallDag(TIntermNode *root)
