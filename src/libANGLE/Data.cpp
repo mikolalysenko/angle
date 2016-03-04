@@ -18,18 +18,39 @@ Data::Data(uintptr_t contextIn,
            const Caps &capsIn,
            const TextureCapsMap &textureCapsIn,
            const Extensions &extensionsIn,
-           const ResourceManager *resourceManagerIn)
+           const ResourceManager *resourceManagerIn,
+           const Limitations &limitationsIn)
     : context(contextIn),
       clientVersion(clientVersionIn),
       state(&stateIn),
       caps(&capsIn),
       textureCaps(&textureCapsIn),
       extensions(&extensionsIn),
-      resourceManager(resourceManagerIn)
+      resourceManager(resourceManagerIn),
+      limitations(&limitationsIn)
 {}
 
 Data::~Data()
 {
 }
 
+ValidationContext::ValidationContext(GLint clientVersion,
+                                     const State &state,
+                                     const Caps &caps,
+                                     const TextureCapsMap &textureCaps,
+                                     const Extensions &extensions,
+                                     const ResourceManager *resourceManager,
+                                     const Limitations &limitations,
+                                     bool skipValidation)
+    : mData(reinterpret_cast<uintptr_t>(this),
+            clientVersion,
+            state,
+            caps,
+            textureCaps,
+            extensions,
+            resourceManager,
+            limitations),
+      mSkipValidation(skipValidation)
+{
 }
+}  // namespace gl

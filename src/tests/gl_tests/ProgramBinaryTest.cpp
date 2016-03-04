@@ -28,7 +28,7 @@ class ProgramBinaryTest : public ANGLETest
         setConfigAlphaBits(8);
     }
 
-    virtual void SetUp()
+    void SetUp() override
     {
         ANGLETest::SetUp();
 
@@ -63,7 +63,7 @@ class ProgramBinaryTest : public ANGLETest
         ASSERT_GL_NO_ERROR();
     }
 
-    virtual void TearDown()
+    void TearDown() override
     {
         glDeleteProgram(mProgram);
         glDeleteBuffers(1, &mBuffer);
@@ -122,6 +122,24 @@ TEST_P(ProgramBinaryTest, FloatDynamicShaderSize)
         EXPECT_GL_NO_ERROR();
         EXPECT_EQ(programLength, newProgramLength);
     }
+}
+
+// Tests that switching between signed and unsigned un-normalized data doesn't trigger a bug
+// in the D3D11 back-end.
+TEST_P(ProgramBinaryTest, DynamicShadersSignatureBug)
+{
+    glUseProgram(mProgram);
+    glBindBuffer(GL_ARRAY_BUFFER, mBuffer);
+
+    GLint attribLocation = glGetAttribLocation(mProgram, "inputAttribute");
+    ASSERT_NE(-1, attribLocation);
+    glEnableVertexAttribArray(attribLocation);
+
+    glVertexAttribPointer(attribLocation, 2, GL_BYTE, GL_FALSE, 0, nullptr);
+    glDrawArrays(GL_POINTS, 0, 1);
+
+    glVertexAttribPointer(attribLocation, 2, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
+    glDrawArrays(GL_POINTS, 0, 1);
 }
 
 // This tests the ability to successfully save and load a program binary.
@@ -255,7 +273,7 @@ class ProgramBinaryTransformFeedbackTest : public ANGLETest
         ASSERT_GL_NO_ERROR();
     }
 
-    virtual void TearDown()
+    void TearDown() override
     {
         glDeleteProgram(mProgram);
 

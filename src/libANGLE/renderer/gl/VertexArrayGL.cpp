@@ -54,7 +54,7 @@ VertexArrayGL::VertexArrayGL(const VertexArray::Data &data,
     }
 
     // Set the cached vertex attribute array size
-    GLint maxVertexAttribs;
+    GLint maxVertexAttribs = 0;
     mFunctions->getIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
     mAppliedAttributes.resize(maxVertexAttribs);
 }
@@ -236,7 +236,7 @@ void VertexArrayGL::computeStreamingAttributeSizes(const gl::AttributesMask &act
     ASSERT(mAttributesNeedStreaming.any());
 
     const auto &attribs = mData.getVertexAttributes();
-    for (unsigned int idx : angle::IterateBitSet(mAttributesNeedStreaming & activeAttributesMask))
+    for (auto idx : angle::IterateBitSet(mAttributesNeedStreaming & activeAttributesMask))
     {
         const auto &attrib = attribs[idx];
         ASSERT(AttributeNeedsStreaming(attrib));
@@ -296,8 +296,7 @@ gl::Error VertexArrayGL::streamAttributes(const gl::AttributesMask &activeAttrib
         size_t curBufferOffset = bufferEmptySpace;
 
         const auto &attribs = mData.getVertexAttributes();
-        for (unsigned int idx :
-             angle::IterateBitSet(mAttributesNeedStreaming & activeAttributesMask))
+        for (auto idx : angle::IterateBitSet(mAttributesNeedStreaming & activeAttributesMask))
         {
             const auto &attrib = attribs[idx];
             ASSERT(AttributeNeedsStreaming(attrib));
@@ -338,13 +337,14 @@ gl::Error VertexArrayGL::streamAttributes(const gl::AttributesMask &activeAttrib
             {
                 ASSERT(!attrib.normalized);
                 mFunctions->vertexAttribIPointer(
-                    idx, attrib.size, attrib.type, static_cast<GLsizei>(destStride),
+                    static_cast<GLuint>(idx), attrib.size, attrib.type,
+                    static_cast<GLsizei>(destStride),
                     reinterpret_cast<const GLvoid *>(vertexStartOffset));
             }
             else
             {
                 mFunctions->vertexAttribPointer(
-                    idx, attrib.size, attrib.type, attrib.normalized,
+                    static_cast<GLuint>(idx), attrib.size, attrib.type, attrib.normalized,
                     static_cast<GLsizei>(destStride),
                     reinterpret_cast<const GLvoid *>(vertexStartOffset));
             }

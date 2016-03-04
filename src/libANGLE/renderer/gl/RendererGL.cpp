@@ -119,8 +119,8 @@ RendererGL::RendererGL(const FunctionsGL *functions, const egl::AttributeMap &at
 
 RendererGL::~RendererGL()
 {
-    SafeDelete(mStateManager);
     SafeDelete(mBlitter);
+    SafeDelete(mStateManager);
 }
 
 gl::Error RendererGL::flush()
@@ -315,7 +315,8 @@ FenceSyncImpl *RendererGL::createFenceSync()
 
 TransformFeedbackImpl *RendererGL::createTransformFeedback()
 {
-    return new TransformFeedbackGL();
+    return new TransformFeedbackGL(mFunctions, mStateManager,
+                                   getRendererCaps().maxTransformFeedbackSeparateComponents);
 }
 
 SamplerImpl *RendererGL::createSampler()
@@ -360,12 +361,6 @@ bool RendererGL::testDeviceResettable()
 {
     UNIMPLEMENTED();
     return bool();
-}
-
-VendorID RendererGL::getVendorId() const
-{
-    UNIMPLEMENTED();
-    return VendorID();
 }
 
 std::string RendererGL::getVendorString() const
@@ -420,5 +415,24 @@ void RendererGL::generateCaps(gl::Caps *outCaps, gl::TextureCapsMap* outTextureC
 void RendererGL::syncState(const gl::State &state, const gl::State::DirtyBits &dirtyBits)
 {
     mStateManager->syncState(state, dirtyBits);
+}
+
+GLint RendererGL::getGPUDisjoint()
+{
+    // TODO(ewell): On GLES backends we should find a way to reliably query disjoint events
+    return 0;
+}
+
+GLint64 RendererGL::getTimestamp()
+{
+    GLint64 result = 0;
+    mFunctions->getInteger64v(GL_TIMESTAMP, &result);
+    return result;
+}
+
+void RendererGL::onMakeCurrent(const gl::Data &data)
+{
+    // Queries need to be paused/resumed on context switches
+    mStateManager->onMakeCurrent(data);
 }
 }

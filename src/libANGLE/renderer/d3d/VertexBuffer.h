@@ -44,8 +44,6 @@ class VertexBuffer : angle::NonCopyable
                                             GLsizei instances,
                                             unsigned int offset,
                                             const uint8_t *sourceData) = 0;
-    virtual gl::Error getSpaceRequired(const gl::VertexAttribute &attrib, GLsizei count, GLsizei instances,
-                                       unsigned int *outSpaceRequired) const = 0;
 
     virtual unsigned int getBufferSize() const = 0;
     virtual gl::Error setBufferSize(unsigned int size) = 0;
@@ -83,9 +81,6 @@ class VertexBufferInterface : angle::NonCopyable
                                             GLsizei instances,
                                             unsigned int *outStreamOffset,
                                             const uint8_t *sourceData);
-
-    bool directStoragePossible(const gl::VertexAttribute &attrib,
-                               GLenum currentValueType) const;
 
     VertexBuffer* getVertexBuffer() const;
 
@@ -135,6 +130,11 @@ class StaticVertexBufferInterface : public VertexBufferInterface
 
     bool lookupAttribute(const gl::VertexAttribute &attribute, unsigned int* outStreamFffset);
 
+    // If a static vertex buffer is committed then no more attribute data can be added to it
+    // A new static vertex buffer should be created instead
+    void commit();
+    bool isCommitted() { return mIsCommitted; }
+
   protected:
     gl::Error reserveSpace(unsigned int size);
 
@@ -151,6 +151,7 @@ class StaticVertexBufferInterface : public VertexBufferInterface
         unsigned int streamOffset;
     };
 
+    bool mIsCommitted;
     std::vector<VertexElement> mCache;
 };
 

@@ -151,7 +151,7 @@ TEST_P(PackUnpackTest, PackUnpackHalfNormal)
 {
     // TODO(cwallez) figure out why it is broken on Intel on Mac
 #if defined(ANGLE_PLATFORM_APPLE)
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel on Mac." << std::endl;
         return;
@@ -201,7 +201,13 @@ TEST_P(PackUnpackTest, PackUnpackSnormOverflow)
 }
 
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these tests should be run against.
-ANGLE_INSTANTIATE_TEST(PackUnpackTest, ES3_OPENGL(3, 3), ES3_OPENGL(4, 0), ES3_OPENGL(4, 1), ES3_OPENGL(4, 2),
-                                       ES3_OPENGL(4, 3), ES3_OPENGL(4, 4), ES3_OPENGL(4, 5));
-
+ANGLE_INSTANTIATE_TEST(PackUnpackTest,
+                       ES3_OPENGL(3, 3),
+                       ES3_OPENGL(4, 0),
+                       ES3_OPENGL(4, 1),
+                       ES3_OPENGL(4, 2),
+                       ES3_OPENGL(4, 3),
+                       ES3_OPENGL(4, 4),
+                       ES3_OPENGL(4, 5),
+                       ES3_OPENGLES());
 }

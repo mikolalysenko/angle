@@ -105,6 +105,11 @@ static float YCoordToFromCG(float y)
         return self;
     }
 
+    - (void) onOSXWindowDeleted
+    {
+        mWindow = nil;
+    }
+
     - (BOOL) windowShouldClose: (id) sender
     {
         Event event;
@@ -115,7 +120,7 @@ static float YCoordToFromCG(float y)
 
     - (void) windowDidResize: (NSNotification*) notification
     {
-        NSSize windowSize = [mWindow->getNSWindow() frame].size;
+        NSSize windowSize = [[mWindow->getNSWindow() contentView] frame].size;
         Event event;
         event.Type = Event::EVENT_RESIZED;
         event.Size.Width = windowSize.width;
@@ -125,7 +130,7 @@ static float YCoordToFromCG(float y)
 
     - (void) windowDidMove: (NSNotification*) notification
     {
-        NSRect screenspace = [mWindow->getNSWindow() contentRectForFrameRect:[mWindow->getNSWindow() frame]];
+        NSRect screenspace = [mWindow->getNSWindow() frame];
         Event event;
         event.Type = Event::EVENT_MOVED;
         event.Move.X = screenspace.origin.x;
@@ -138,13 +143,18 @@ static float YCoordToFromCG(float y)
         Event event;
         event.Type = Event::EVENT_GAINED_FOCUS;
         mWindow->pushEvent(event);
+        [self retain];
     }
 
     - (void) windowDidResignKey: (NSNotification*) notification
     {
-        Event event;
-        event.Type = Event::EVENT_LOST_FOCUS;
-        mWindow->pushEvent(event);
+        if (mWindow != nil)
+        {
+            Event event;
+            event.Type = Event::EVENT_LOST_FOCUS;
+            mWindow->pushEvent(event);
+        }
+        [self release];
     }
 @end
 
@@ -570,6 +580,7 @@ void OSXWindow::destroy()
 
     [mView release];
     mView = nil;
+    [mDelegate onOSXWindowDeleted];
     [mDelegate release];
     mDelegate = nil;
     [mWindow release];

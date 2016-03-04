@@ -24,7 +24,8 @@ struct Data final : public angle::NonCopyable
          const Caps &caps,
          const TextureCapsMap &textureCaps,
          const Extensions &extensions,
-         const ResourceManager *resourceManager);
+         const ResourceManager *resourceManager,
+         const Limitations &limitations);
     ~Data();
 
     uintptr_t context;
@@ -34,6 +35,36 @@ struct Data final : public angle::NonCopyable
     const TextureCapsMap *textureCaps;
     const Extensions *extensions;
     const ResourceManager *resourceManager;
+    const Limitations *limitations;
+};
+
+class ValidationContext : angle::NonCopyable
+{
+  public:
+    ValidationContext(GLint clientVersion,
+                      const State &state,
+                      const Caps &caps,
+                      const TextureCapsMap &textureCaps,
+                      const Extensions &extensions,
+                      const ResourceManager *resourceManager,
+                      const Limitations &limitations,
+                      bool skipValidation);
+    virtual ~ValidationContext() {}
+
+    virtual void recordError(const Error &error) = 0;
+
+    const Data &getData() const { return mData; }
+    int getClientVersion() const { return mData.clientVersion; }
+    const State &getState() const { return *mData.state; }
+    const Caps &getCaps() const { return *mData.caps; }
+    const TextureCapsMap &getTextureCaps() const { return *mData.textureCaps; }
+    const Extensions &getExtensions() const { return *mData.extensions; }
+    const Limitations &getLimitations() const { return *mData.limitations; }
+    bool skipValidation() const { return mSkipValidation; }
+
+  protected:
+    Data mData;
+    bool mSkipValidation;
 };
 
 }

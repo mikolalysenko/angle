@@ -99,7 +99,7 @@ TEST_P(UniformTest, GetUniformNoCurrentProgram)
 TEST_P(UniformTest, UniformArrayLocations)
 {
     // TODO(geofflang): Figure out why this is broken on Intel OpenGL
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel OpenGL." << std::endl;
         return;
@@ -501,7 +501,12 @@ TEST_P(UniformTest, SamplerUniformsAppearOnce)
 }
 
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these tests should be run against.
-ANGLE_INSTANTIATE_TEST(UniformTest, ES2_D3D9(), ES2_D3D11(), ES2_D3D11_FL9_3(), ES2_OPENGL());
-ANGLE_INSTANTIATE_TEST(UniformTestES3, ES3_D3D11(), ES3_OPENGL());
+ANGLE_INSTANTIATE_TEST(UniformTest,
+                       ES2_D3D9(),
+                       ES2_D3D11(),
+                       ES2_D3D11_FL9_3(),
+                       ES2_OPENGL(),
+                       ES2_OPENGLES());
+ANGLE_INSTANTIATE_TEST(UniformTestES3, ES3_D3D11(), ES3_OPENGL(), ES3_OPENGLES());
 
 } // namespace

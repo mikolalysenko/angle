@@ -56,6 +56,10 @@ class MockBufferFactoryD3D : public rx::BufferFactoryD3D
     MOCK_METHOD0(createVertexBuffer, rx::VertexBuffer*());
     MOCK_CONST_METHOD1(getVertexConversionType, rx::VertexConversionType(gl::VertexFormatType));
     MOCK_CONST_METHOD1(getVertexComponentType, GLenum(gl::VertexFormatType));
+    MOCK_CONST_METHOD3(getVertexSpaceRequired,
+                       gl::ErrorOrResult<unsigned int>(const gl::VertexAttribute &,
+                                                       GLsizei,
+                                                       GLsizei));
 
     // Dependency injection
     rx::IndexBuffer* createIndexBuffer() override
@@ -116,7 +120,7 @@ class IndexDataManagerPerfTest : public ANGLEPerfTest
   public:
     IndexDataManagerPerfTest();
 
-    void step(float dt, double totalTime) override;
+    void step() override;
 
     rx::IndexDataManager mIndexDataManager;
     GLsizei mIndexCount;
@@ -151,20 +155,15 @@ IndexDataManagerPerfTest::IndexDataManagerPerfTest()
     mIndexBuffer.bufferData(&indexData[0], indexData.size() * sizeof(GLushort), GL_STATIC_DRAW);
 }
 
-void IndexDataManagerPerfTest::step(float dt, double totalTime)
+void IndexDataManagerPerfTest::step()
 {
     rx::TranslatedIndexData translatedIndexData;
-    rx::SourceIndexData sourceIndexData;
     for (unsigned int iteration = 0; iteration < 100; ++iteration)
     {
         mIndexBuffer.getIndexRange(GL_UNSIGNED_SHORT, 0, mIndexCount, false,
                                    &translatedIndexData.indexRange);
-        mIndexDataManager.prepareIndexData(GL_UNSIGNED_SHORT, mIndexCount, &mIndexBuffer, nullptr, &translatedIndexData, &sourceIndexData);
-    }
-
-    if (mTimer->getElapsedTime() >= 5.0)
-    {
-        mRunning = false;
+        mIndexDataManager.prepareIndexData(GL_UNSIGNED_SHORT, mIndexCount, &mIndexBuffer, nullptr,
+                                           &translatedIndexData, false);
     }
 }
 

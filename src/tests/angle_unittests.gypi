@@ -20,6 +20,7 @@
             '<(angle_path)/src/common/matrix_utils_unittest.cpp',
             '<(angle_path)/src/common/string_utils_unittest.cpp',
             '<(angle_path)/src/common/utilities_unittest.cpp',
+            '<(angle_path)/src/libANGLE/BinaryStream_unittest.cpp',
             '<(angle_path)/src/libANGLE/Config_unittest.cpp',
             '<(angle_path)/src/libANGLE/Fence_unittest.cpp',
             '<(angle_path)/src/libANGLE/HandleAllocator_unittest.cpp',
@@ -29,7 +30,10 @@
             '<(angle_path)/src/libANGLE/ResourceManager_unittest.cpp',
             '<(angle_path)/src/libANGLE/Surface_unittest.cpp',
             '<(angle_path)/src/libANGLE/TransformFeedback_unittest.cpp',
+            '<(angle_path)/src/libANGLE/validationES_unittest.cpp',
             '<(angle_path)/src/libANGLE/renderer/BufferImpl_mock.h',
+            '<(angle_path)/src/libANGLE/renderer/FramebufferImpl_mock.h',
+            '<(angle_path)/src/libANGLE/renderer/ProgramImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/RenderbufferImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/ImageImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/TextureImpl_mock.h',
@@ -43,6 +47,7 @@
             '<(angle_path)/src/tests/compiler_tests/ExpressionLimit_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/EXT_blend_func_extended_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/FragDepth_test.cpp',
+            '<(angle_path)/src/tests/compiler_tests/GLSLCompatibilityOutput_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/IntermNode_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/MalformedShader_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/NV_draw_buffers_test.cpp',
@@ -80,7 +85,6 @@
         # TODO(jmadill): should probably call this windows sources
         'angle_unittests_hlsl_sources':
         [
-            '<(angle_path)/src/libANGLE/renderer/d3d/DynamicHLSL_unittest.cpp',
             '<(angle_path)/src/tests/compiler_tests/UnrollFlatten_test.cpp',
         ],
     },

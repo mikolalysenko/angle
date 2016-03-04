@@ -15,6 +15,7 @@
 #include "common/platform.h"
 #include "libANGLE/renderer/d3d/formatutilsD3D.h"
 #include "libANGLE/renderer/d3d/d3d11/Renderer11.h"
+#include "libANGLE/renderer/d3d/d3d11/texture_format_table_autogen.h"
 
 namespace rx
 {
@@ -22,25 +23,64 @@ namespace rx
 namespace d3d11
 {
 
-struct TextureFormat
+struct LoadImageFunctionInfo
 {
-    TextureFormat();
+    LoadImageFunctionInfo() : loadFunction(nullptr), requiresConversion(false) {}
+    LoadImageFunctionInfo(LoadImageFunction loadFunction, bool requiresConversion)
+        : loadFunction(loadFunction), requiresConversion(requiresConversion)
+    {
+    }
+
+    LoadImageFunction loadFunction;
+    bool requiresConversion;
+};
+
+struct ANGLEFormatSet
+{
+    ANGLEFormatSet();
+    ANGLEFormatSet(ANGLEFormat format,
+                   GLenum glInternalFormat,
+                   DXGI_FORMAT texFormat,
+                   DXGI_FORMAT srvFormat,
+                   DXGI_FORMAT rtvFormat,
+                   DXGI_FORMAT dsvFormat,
+                   ANGLEFormat swizzleFormat,
+                   MipGenerationFunction mipGenerationFunction);
+    ANGLEFormatSet(const ANGLEFormatSet &) = default;
+    ANGLEFormatSet &operator=(const ANGLEFormatSet &) = default;
+
+    ANGLEFormat format;
+
+    // The closest matching GL internal format for the DXGI formats this format uses. Note that this
+    // may be a different internal format than the one this ANGLE format is used for.
+    GLenum glInternalFormat;
 
     DXGI_FORMAT texFormat;
     DXGI_FORMAT srvFormat;
     DXGI_FORMAT rtvFormat;
     DXGI_FORMAT dsvFormat;
-    DXGI_FORMAT renderFormat;
 
-    DXGI_FORMAT swizzleTexFormat;
-    DXGI_FORMAT swizzleSRVFormat;
-    DXGI_FORMAT swizzleRTVFormat;
+    ANGLEFormat swizzleFormat;
+
+    MipGenerationFunction mipGenerationFunction;
+};
+
+struct TextureFormat : public angle::NonCopyable
+{
+    TextureFormat(GLenum internalFormat,
+                  const ANGLEFormat angleFormat,
+                  InitializeTextureDataFunction internalFormatInitializer);
+
+    ANGLEFormatSet formatSet;
+    ANGLEFormatSet swizzleFormatSet;
 
     InitializeTextureDataFunction dataInitializerFunction;
-    typedef std::map<GLenum, LoadImageFunction> LoadFunctionMap;
+    typedef std::map<GLenum, LoadImageFunctionInfo> LoadFunctionMap;
 
     LoadFunctionMap loadFunctions;
 };
+
+const ANGLEFormatSet &GetANGLEFormatSet(ANGLEFormat angleFormat);
 
 const TextureFormat &GetTextureFormatInfo(GLenum internalformat,
                                           const Renderer11DeviceCaps &renderer11DeviceCaps);

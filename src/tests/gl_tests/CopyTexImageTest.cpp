@@ -166,7 +166,7 @@ TEST_P(CopyTexImageTest, RGBToL)
 {
     // TODO (geofflang): Figure out why CopyTex[Sub]Image doesn't work with
     // RGB->L on older Intel chips
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel OpenGL." << std::endl;
         return;
@@ -269,7 +269,7 @@ TEST_P(CopyTexImageTest, SubImageRGBToL)
 {
     // TODO (geofflang): Figure out why CopyTex[Sub]Image doesn't work with
     // RGB->L on older Intel chips
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel OpenGL." << std::endl;
         return;
@@ -300,5 +300,11 @@ TEST_P(CopyTexImageTest, SubImageRGBToL)
 
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these
 // tests should be run against.
-ANGLE_INSTANTIATE_TEST(CopyTexImageTest, ES2_D3D9(), ES2_D3D11(), ES2_OPENGL(), ES2_OPENGL(3, 3));
+ANGLE_INSTANTIATE_TEST(CopyTexImageTest,
+                       ES2_D3D9(),
+                       ES2_D3D11(EGL_EXPERIMENTAL_PRESENT_PATH_COPY_ANGLE),
+                       ES2_D3D11(EGL_EXPERIMENTAL_PRESENT_PATH_FAST_ANGLE),
+                       ES2_OPENGL(),
+                       ES2_OPENGL(3, 3),
+                       ES2_OPENGLES());
 }

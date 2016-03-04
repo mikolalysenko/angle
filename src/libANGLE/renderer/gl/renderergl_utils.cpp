@@ -22,7 +22,7 @@
 
 namespace rx
 {
-static VendorID GetVendorID(const FunctionsGL *functions)
+VendorID GetVendorID(const FunctionsGL *functions)
 {
     std::string nativeVendorString(reinterpret_cast<const char *>(functions->getString(GL_VENDOR)));
     if (nativeVendorString.find("Intel") != std::string::npos)
@@ -111,35 +111,35 @@ static gl::TextureCaps GenerateTextureFormatCaps(const FunctionsGL *functions, G
 
 static GLint QuerySingleGLInt(const FunctionsGL *functions, GLenum name)
 {
-    GLint result;
+    GLint result = 0;
     functions->getIntegerv(name, &result);
     return result;
 }
 
 static GLint QueryGLIntRange(const FunctionsGL *functions, GLenum name, size_t index)
 {
-    GLint result[2];
+    GLint result[2] = {};
     functions->getIntegerv(name, result);
     return result[index];
 }
 
 static GLint64 QuerySingleGLInt64(const FunctionsGL *functions, GLenum name)
 {
-    GLint64 result;
+    GLint64 result = 0;
     functions->getInteger64v(name, &result);
     return result;
 }
 
 static GLfloat QuerySingleGLFloat(const FunctionsGL *functions, GLenum name)
 {
-    GLfloat result;
+    GLfloat result = 0.0f;
     functions->getFloatv(name, &result);
     return result;
 }
 
 static GLfloat QueryGLFloatRange(const FunctionsGL *functions, GLenum name, size_t index)
 {
-    GLfloat result[2];
+    GLfloat result[2] = {};
     functions->getFloatv(name, result);
     return result[index];
 }
@@ -149,6 +149,13 @@ static gl::TypePrecision QueryTypePrecision(const FunctionsGL *functions, GLenum
     gl::TypePrecision precision;
     functions->getShaderPrecisionFormat(shaderType, precisionType, precision.range, &precision.precision);
     return precision;
+}
+
+static GLint QueryQueryValue(const FunctionsGL *functions, GLenum target, GLenum name)
+{
+    GLint result;
+    functions->getQueryiv(target, name, &result);
+    return result;
 }
 
 static void LimitVersion(gl::Version *curVersion, const gl::Version &maxVersion)
@@ -244,6 +251,9 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
     }
     else
     {
+        // Framebuffer is required to have at least one drawbuffer even if the extension is not
+        // supported
+        caps->maxDrawBuffers = 1;
         LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
     }
 
@@ -447,8 +457,9 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
         LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
     }
 
-    if (functions->isAtLeastGL(gl::Version(3, 0)) || functions->hasGLExtension("GL_ARB_ES3_compatibility") ||
-        functions->isAtLeastGLES(gl::Version(3, 0)))
+    if (functions->isAtLeastGL(gl::Version(3, 0)) ||
+        functions->hasGLExtension("GL_ARB_ES2_compatibility") ||
+        functions->isAtLeastGLES(gl::Version(2, 0)))
     {
         caps->maxVaryingComponents = QuerySingleGLInt(functions, GL_MAX_VARYING_COMPONENTS);
     }
@@ -478,7 +489,8 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
     caps->maxCombinedTextureImageUnits = caps->maxVertexTextureImageUnits + caps->maxTextureImageUnits;
 
     // Table 6.34, implementation dependent transform feedback limits
-    if (functions->isAtLeastGL(gl::Version(3, 0)) || functions->hasGLExtension("GL_EXT_transform_feedback") ||
+    if (functions->isAtLeastGL(gl::Version(4, 0)) ||
+        functions->hasGLExtension("GL_ARB_transform_feedback2") ||
         functions->isAtLeastGLES(gl::Version(3, 0)))
     {
         caps->maxTransformFeedbackInterleavedComponents = QuerySingleGLInt(functions, GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS);
@@ -526,6 +538,36 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
             LimitVersion(maxSupportedESVersion, gl::Version(0, 0));
         }
     }
+
+    // Can't support ES3 without the GLSL packing builtins. We have a workaround for all
+    // desktop OpenGL versions starting from 3.3 with the bit packing extension.
+    if (!functions->isAtLeastGL(gl::Version(4, 2)) &&
+        !(functions->isAtLeastGL(gl::Version(3, 2)) &&
+          functions->hasGLExtension("GL_ARB_shader_bit_encoding")) &&
+        !functions->hasGLExtension("GL_ARB_shading_language_packing") &&
+        !functions->isAtLeastGLES(gl::Version(3, 0)))
+    {
+        LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
+    }
+
+    // ES3 needs to support explicit layout location qualifiers, while it might be possible to
+    // fake them in our side, we currently don't support that.
+    if (!functions->isAtLeastGL(gl::Version(3, 3)) &&
+        !functions->hasGLExtension("GL_ARB_explicit_attrib_location") &&
+        !functions->isAtLeastGLES(gl::Version(3, 0)))
+    {
+        LimitVersion(maxSupportedESVersion, gl::Version(2, 0));
+    }
+
+    // TODO(geofflang): The gl-uniform-arrays WebGL conformance test struggles to complete on time
+    // if the max uniform vectors is too large.  Artificially limit the maximum until the test is
+    // updated.
+    caps->maxVertexUniformVectors = std::min(1024u, caps->maxVertexUniformVectors);
+    caps->maxVertexUniformComponents =
+        std::min(caps->maxVertexUniformVectors / 4, caps->maxVertexUniformComponents);
+    caps->maxFragmentUniformVectors = std::min(1024u, caps->maxFragmentUniformVectors);
+    caps->maxFragmentUniformComponents =
+        std::min(caps->maxFragmentUniformVectors / 4, caps->maxFragmentUniformComponents);
 
     // Extension support
     extensions->setTextureExtensionSupport(*textureCapsMap);
@@ -577,6 +619,21 @@ void GenerateCaps(const FunctionsGL *functions, gl::Caps *caps, gl::TextureCapsM
     extensions->debugMarker =
         functions->isAtLeastGL(gl::Version(4, 3)) || functions->hasGLExtension("GL_KHR_debug") ||
         functions->isAtLeastGLES(gl::Version(3, 2)) || functions->hasGLESExtension("GL_KHR_debug");
+    if (functions->isAtLeastGL(gl::Version(3, 3)) ||
+        functions->hasGLExtension("GL_ARB_timer_query") ||
+        functions->hasGLESExtension("GL_EXT_disjoint_timer_query"))
+    {
+        extensions->disjointTimerQuery = true;
+        extensions->queryCounterBitsTimeElapsed =
+            QueryQueryValue(functions, GL_TIME_ELAPSED, GL_QUERY_COUNTER_BITS);
+        extensions->queryCounterBitsTimestamp =
+            QueryQueryValue(functions, GL_TIMESTAMP, GL_QUERY_COUNTER_BITS);
+    }
+
+    // ANGLE emulates vertex array objects in its GL layer
+    extensions->vertexArrayObject = true;
+
+    extensions->noError = true;
 }
 
 void GenerateWorkarounds(const FunctionsGL *functions, WorkaroundsGL *workarounds)

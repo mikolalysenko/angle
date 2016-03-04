@@ -142,7 +142,7 @@ class SwizzleTest : public ANGLETest
     void runTest2D()
     {
         // TODO(jmadill): Figure out why this fails on Intel.
-        if (isIntel() && GetParam().getRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+        if (IsIntel() && GetParam().getRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
         {
             std::cout << "Test skipped on Intel." << std::endl;
             return;
@@ -227,6 +227,13 @@ TEST_P(SwizzleTest, R8_2D)
 {
     GLubyte data[] = { 2 };
     init2DTexture(GL_R8, GL_RED, GL_UNSIGNED_BYTE, data);
+    runTest2D();
+}
+
+TEST_P(SwizzleTest, RGB10_A2_2D)
+{
+    GLuint data[] = {20u | (40u << 10) | (60u << 20) | (2u << 30)};
+    init2DTexture(GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, data);
     runTest2D();
 }
 
@@ -340,6 +347,6 @@ TEST_P(SwizzleTest, CompressedDXT_2D)
 }
 
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these tests should be run against.
-ANGLE_INSTANTIATE_TEST(SwizzleTest, ES3_D3D11(), ES3_OPENGL(), ES3_OPENGL(3, 3));
+ANGLE_INSTANTIATE_TEST(SwizzleTest, ES3_D3D11(), ES3_OPENGL(), ES3_OPENGL(3, 3), ES3_OPENGLES());
 
 } // namespace

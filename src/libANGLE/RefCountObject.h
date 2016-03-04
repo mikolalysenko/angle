@@ -21,15 +21,26 @@
 class RefCountObject : angle::NonCopyable
 {
   public:
-    explicit RefCountObject(GLuint id);
-    virtual ~RefCountObject();
+    explicit RefCountObject(GLuint id) : mId(id), mRefCount(0) {}
 
-    virtual void addRef() const;
-    virtual void release() const;
+    void addRef() const { ++mRefCount; }
+
+    void release() const
+    {
+        ASSERT(mRefCount > 0);
+
+        if (--mRefCount == 0)
+        {
+            delete this;
+        }
+    }
 
     GLuint id() const { return mId; }
 
     size_t getRefCount() const { return mRefCount; }
+
+  protected:
+    virtual ~RefCountObject() { ASSERT(mRefCount == 0); }
 
   private:
     GLuint mId;
@@ -76,6 +87,13 @@ class BindingPointer
 
     GLuint id() const { return (mObject != nullptr) ? mObject->id() : 0; }
 
+    bool operator==(const BindingPointer<ObjectType> &other) const
+    {
+        return mObject == other.mObject;
+    }
+
+    bool operator!=(const BindingPointer<ObjectType> &other) const { return !(*this == other); }
+
   private:
     ObjectType *mObject;
 };
@@ -102,6 +120,16 @@ class OffsetBindingPointer : public BindingPointer<ObjectType>
 
     GLintptr getOffset() const { return mOffset; }
     GLsizeiptr getSize() const { return mSize; }
+
+    bool operator==(const OffsetBindingPointer<ObjectType> &other) const
+    {
+        return this->get() == other.get() && mOffset == other.mOffset && mSize == other.mSize;
+    }
+
+    bool operator!=(const OffsetBindingPointer<ObjectType> &other) const
+    {
+        return !(*this == other);
+    }
 
   private:
     GLintptr mOffset;
