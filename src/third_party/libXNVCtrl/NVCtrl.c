@@ -45,7 +45,7 @@
 #define NVCTRL_EXT_EXISTS              1
 #define NVCTRL_EXT_NEED_TARGET_SWAP    2
 #define NVCTRL_EXT_64_BIT_ATTRIBUTES   4
-#define NVCTRL_EXT_NEED_CHECK          (1 << (sizeof(XPointer) - 1))
+#define NVCTRL_EXT_NEED_CHECK          (1L << (sizeof(XPointer) - 1L))
 
 static XExtensionInfo _nvctrl_ext_info_data;
 static XExtensionInfo *nvctrl_ext_info = &_nvctrl_ext_info_data;
@@ -77,7 +77,7 @@ static XEXT_GENERATE_FIND_DISPLAY (find_display, nvctrl_ext_info,
                                    nvctrl_extension_name,
                                    &nvctrl_extension_hooks,
                                    NV_CONTROL_EVENTS,
-                                   reinterpret_cast<XPointer>(NVCTRL_EXT_NEED_CHECK))
+                                   (XPointer)NVCTRL_EXT_NEED_CHECK)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, nvctrl_ext_info)
 
