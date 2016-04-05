@@ -1854,6 +1854,11 @@ bool ValidateDrawArraysInstanced(Context *context, GLenum mode, GLint first, GLs
 
 static bool ValidateDrawInstancedANGLE(Context *context)
 {
+    // HACK: For WebGL, we need to support drawing points when no attributes
+    // are set.
+    return true;
+
+    /*
     // Verify there is at least one active attribute with a divisor of zero
     const gl::State& state = context->getState();
 
@@ -1872,6 +1877,7 @@ static bool ValidateDrawInstancedANGLE(Context *context)
     context->recordError(Error(GL_INVALID_OPERATION, "ANGLE_instanced_arrays requires that at least one active attribute"
                                                      "has a divisor of zero."));
     return false;
+    */
 }
 
 bool ValidateDrawArraysInstancedANGLE(Context *context, GLenum mode, GLint first, GLsizei count, GLsizei primcount)
