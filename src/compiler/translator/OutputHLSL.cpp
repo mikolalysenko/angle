@@ -158,6 +158,7 @@ OutputHLSL::OutputHLSL(sh::GLenum shaderType, int shaderVersion,
     mUsesFrontFacing = false;
     mUsesPointSize = false;
     mUsesInstanceID = false;
+    mUsesVertexID                = false;
     mUsesFragDepth = false;
     mUsesXor = false;
     mUsesDiscardRewriting = false;
@@ -583,6 +584,11 @@ void OutputHLSL::header(TInfoSinkBase &out, const BuiltInFunctionEmulator *built
         if (mUsesInstanceID)
         {
             out << "static int gl_InstanceID;";
+        }
+
+        if (mUsesVertexID)
+        {
+            out << "static int gl_VertexID;";
         }
 
         out << "\n"
@@ -1510,6 +1516,11 @@ void OutputHLSL::visitSymbol(TIntermSymbol *node)
             mUsesInstanceID = true;
             out << name;
         }
+        else if (qualifier == EvqVertexID)
+        {
+            mUsesVertexID = true;
+            out << name;
+        }
         else if (name == "gl_FragDepthEXT" || name == "gl_FragDepth")
         {
             mUsesFragDepth = true;
@@ -2221,11 +2232,11 @@ bool OutputHLSL::visitAggregate(Visit visit, TIntermAggregate *node)
                 return false;
             }
 
-            TString name = DecorateFunctionIfNeeded(node->getNameObj());
-            out << TypeString(node->getType()) << " " << name
-                << (mOutputLod0Function ? "Lod0(" : "(");
-
             TIntermSequence *arguments = node->getSequence();
+
+            TString name = DecorateFunctionIfNeeded(node->getNameObj());
+            out << TypeString(node->getType()) << " " << name << DisambiguateFunctionName(arguments)
+                << (mOutputLod0Function ? "Lod0(" : "(");
 
             for (unsigned int i = 0; i < arguments->size(); i++)
             {
@@ -2271,6 +2282,9 @@ bool OutputHLSL::visitAggregate(Visit visit, TIntermAggregate *node)
 
             out << TypeString(node->getType()) << " ";
 
+            TIntermSequence *sequence  = node->getSequence();
+            TIntermSequence *arguments = (*sequence)[0]->getAsAggregate()->getSequence();
+
             if (name == "main")
             {
                 out << "gl_main(";
@@ -2278,11 +2292,8 @@ bool OutputHLSL::visitAggregate(Visit visit, TIntermAggregate *node)
             else
             {
                 out << DecorateFunctionIfNeeded(node->getNameObj())
-                    << (mOutputLod0Function ? "Lod0(" : "(");
+                    << DisambiguateFunctionName(arguments) << (mOutputLod0Function ? "Lod0(" : "(");
             }
-
-            TIntermSequence *sequence = node->getSequence();
-            TIntermSequence *arguments = (*sequence)[0]->getAsAggregate()->getSequence();
 
             for (unsigned int i = 0; i < arguments->size(); i++)
             {
@@ -2347,7 +2358,9 @@ bool OutputHLSL::visitAggregate(Visit visit, TIntermAggregate *node)
                 ASSERT(index != CallDAG::InvalidIndex);
                 lod0 &= mASTMetadataList[index].mNeedsLod0;
 
-                out << DecorateFunctionIfNeeded(node->getNameObj()) << (lod0 ? "Lod0(" : "(");
+                out << DecorateFunctionIfNeeded(node->getNameObj());
+                out << DisambiguateFunctionName(node->getSequence());
+                out << (lod0 ? "Lod0(" : "(");
             }
             else
             {
@@ -3285,9 +3298,9 @@ void OutputHLSL::outputConstructor(TInfoSinkBase &out,
 
     if (visit == PreVisit)
     {
-        mStructureHLSL->addConstructor(type, name, parameters);
+        TString constructorName = mStructureHLSL->addConstructor(type, name, parameters);
 
-        out << name << "(";
+        out << constructorName << "(";
     }
     else if (visit == InVisit)
     {

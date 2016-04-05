@@ -68,13 +68,16 @@ bool ValidateDrawAttribs(ValidationContext *context, GLint primcount, GLint maxV
                     GLint64 attribSize =
                         static_cast<GLint64>(ComputeVertexAttributeTypeSize(attrib));
                     GLint64 attribDataSize = (maxVertexElement - 1) * attribStride + attribSize;
+                    GLint64 attribOffset   = static_cast<GLint64>(attrib.offset);
 
                     // [OpenGL ES 3.0.2] section 2.9.4 page 40:
                     // We can return INVALID_OPERATION if our vertex attribute does not have
                     // enough backing data.
-                    if (attribDataSize > buffer->getSize())
+                    if (attribDataSize + attribOffset > buffer->getSize())
                     {
-                        context->recordError(Error(GL_INVALID_OPERATION));
+                        context->recordError(
+                            Error(GL_INVALID_OPERATION,
+                                  "Vertex buffer is not big enough for the draw call"));
                         return false;
                     }
                 }
@@ -1098,18 +1101,7 @@ bool ValidateReadnPixelsEXT(Context *context,
     return ValidateReadPixels(context, x, y, width, height, format, type, pixels);
 }
 
-bool ValidateGenQueriesBase(gl::Context *context, GLsizei n, const GLuint *ids)
-{
-    if (n < 0)
-    {
-        context->recordError(Error(GL_INVALID_VALUE, "Query count < 0"));
-        return false;
-    }
-
-    return true;
-}
-
-bool ValidateGenQueriesEXT(gl::Context *context, GLsizei n, const GLuint *ids)
+bool ValidateGenQueriesEXT(gl::Context *context, GLsizei n)
 {
     if (!context->getExtensions().occlusionQueryBoolean &&
         !context->getExtensions().disjointTimerQuery)
@@ -1118,21 +1110,10 @@ bool ValidateGenQueriesEXT(gl::Context *context, GLsizei n, const GLuint *ids)
         return false;
     }
 
-    return ValidateGenQueriesBase(context, n, ids);
+    return ValidateGenOrDelete(context, n);
 }
 
-bool ValidateDeleteQueriesBase(gl::Context *context, GLsizei n, const GLuint *ids)
-{
-    if (n < 0)
-    {
-        context->recordError(Error(GL_INVALID_VALUE, "Query count < 0"));
-        return false;
-    }
-
-    return true;
-}
-
-bool ValidateDeleteQueriesEXT(gl::Context *context, GLsizei n, const GLuint *ids)
+bool ValidateDeleteQueriesEXT(gl::Context *context, GLsizei n)
 {
     if (!context->getExtensions().occlusionQueryBoolean &&
         !context->getExtensions().disjointTimerQuery)
@@ -1141,7 +1122,7 @@ bool ValidateDeleteQueriesEXT(gl::Context *context, GLsizei n, const GLuint *ids
         return false;
     }
 
-    return ValidateDeleteQueriesBase(context, n, ids);
+    return ValidateGenOrDelete(context, n);
 }
 
 bool ValidateBeginQueryBase(gl::Context *context, GLenum target, GLuint id)
@@ -2017,7 +1998,7 @@ bool ValidateDrawElements(ValidationContext *context,
         return false;
     }
 
-    if (!ValidateDrawAttribs(context, primcount, static_cast<GLsizei>(indexRangeOut->end)))
+    if (!ValidateDrawAttribs(context, primcount, static_cast<GLint>(indexRangeOut->vertexCount())))
     {
         return false;
     }
@@ -2265,7 +2246,7 @@ bool ValidateDiscardFramebufferBase(Context *context, GLenum target, GLsizei num
 
     for (GLsizei i = 0; i < numAttachments; ++i)
     {
-        if (attachments[i] >= GL_COLOR_ATTACHMENT0 && attachments[i] <= GL_COLOR_ATTACHMENT15)
+        if (attachments[i] >= GL_COLOR_ATTACHMENT0 && attachments[i] <= GL_COLOR_ATTACHMENT31)
         {
             if (defaultFramebuffer)
             {
@@ -2442,25 +2423,16 @@ bool ValidateBindVertexArrayBase(Context *context, GLuint array)
     return true;
 }
 
-bool ValidateDeleteVertexArraysBase(Context *context, GLsizei n)
+bool ValidateLinkProgram(Context *context, GLuint program)
 {
-    if (n < 0)
+    if (context->hasActiveTransformFeedback(program))
     {
-        context->recordError(Error(GL_INVALID_VALUE));
+        // ES 3.0.4 section 2.15 page 91
+        context->recordError(Error(GL_INVALID_OPERATION,
+                                   "Cannot link program while program is associated with an active "
+                                   "transform feedback object."));
         return false;
     }
-
-    return true;
-}
-
-bool ValidateGenVertexArraysBase(Context *context, GLsizei n)
-{
-    if (n < 0)
-    {
-        context->recordError(Error(GL_INVALID_VALUE));
-        return false;
-    }
-
     return true;
 }
 
@@ -2484,6 +2456,15 @@ bool ValidateProgramBinaryBase(Context *context,
         return false;
     }
 
+    if (context->hasActiveTransformFeedback(program))
+    {
+        // ES 3.0.4 section 2.15 page 91
+        context->recordError(Error(GL_INVALID_OPERATION,
+                                   "Cannot change program binary while program is associated with "
+                                   "an active transform feedback object."));
+        return false;
+    }
+
     return true;
 }
 
@@ -2503,6 +2484,45 @@ bool ValidateGetProgramBinaryBase(Context *context,
     if (!programObject->isLinked())
     {
         context->recordError(Error(GL_INVALID_OPERATION, "Program is not linked."));
+        return false;
+    }
+
+    return true;
+}
+
+bool ValidateUseProgram(Context *context, GLuint program)
+{
+    if (program != 0)
+    {
+        Program *programObject = context->getProgram(program);
+        if (!programObject)
+        {
+            // ES 3.1.0 section 7.3 page 72
+            if (context->getShader(program))
+            {
+                context->recordError(
+                    Error(GL_INVALID_OPERATION,
+                          "Attempted to use a single shader instead of a shader program."));
+                return false;
+            }
+            else
+            {
+                context->recordError(Error(GL_INVALID_VALUE, "Program invalid."));
+                return false;
+            }
+        }
+        if (!programObject->isLinked())
+        {
+            context->recordError(Error(GL_INVALID_OPERATION, "Program not linked."));
+            return false;
+        }
+    }
+    if (context->getState().isTransformFeedbackActiveUnpaused())
+    {
+        // ES 3.0.4 section 2.15 page 91
+        context->recordError(
+            Error(GL_INVALID_OPERATION,
+                  "Cannot change active program while transform feedback is unpaused."));
         return false;
     }
 
@@ -2569,13 +2589,21 @@ bool ValidateDrawBuffersBase(ValidationContext *context, GLsizei n, const GLenum
         const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT + colorAttachment;
 
         if (bufs[colorAttachment] != GL_NONE && bufs[colorAttachment] != GL_BACK &&
-            (bufs[colorAttachment] < GL_COLOR_ATTACHMENT0_EXT ||
-             bufs[colorAttachment] >= maxColorAttachment))
+            (bufs[colorAttachment] < GL_COLOR_ATTACHMENT0 ||
+             bufs[colorAttachment] > GL_COLOR_ATTACHMENT31))
         {
             // Value in bufs is not NONE, BACK, or GL_COLOR_ATTACHMENTi
-            // In the 3.0 specs, the error should return GL_INVALID_OPERATION.
-            // When we move to 3.1 specs, we should change the error to be GL_INVALID_ENUM
-            context->recordError(Error(GL_INVALID_OPERATION, "Invalid buffer value"));
+            // The 3.0.4 spec says to generate GL_INVALID_OPERATION here, but this
+            // was changed to GL_INVALID_ENUM in 3.1, which dEQP also expects.
+            // 3.1 is still a bit ambiguous about the error, but future specs are
+            // expected to clarify that GL_INVALID_ENUM is the correct error.
+            context->recordError(Error(GL_INVALID_ENUM, "Invalid buffer value"));
+            return false;
+        }
+        else if (bufs[colorAttachment] >= maxColorAttachment)
+        {
+            context->recordError(
+                Error(GL_INVALID_OPERATION, "Buffer value is greater than MAX_DRAW_BUFFERS"));
             return false;
         }
         else if (bufs[colorAttachment] != GL_NONE && bufs[colorAttachment] != attachment &&
@@ -2630,6 +2658,56 @@ bool ValidateCopyTexSubImage2D(Context *context,
 
     return ValidateES3CopyTexImage2DParameters(context, target, level, GL_NONE, true, xoffset,
                                                yoffset, 0, x, y, width, height, 0);
+}
+
+bool ValidateGenBuffers(Context *context, GLint n, GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateDeleteBuffers(Context *context, GLint n, const GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateGenFramebuffers(Context *context, GLint n, GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateDeleteFramebuffers(Context *context, GLint n, const GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateGenRenderbuffers(Context *context, GLint n, GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateDeleteRenderbuffers(Context *context, GLint n, const GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateGenTextures(Context *context, GLint n, GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateDeleteTextures(Context *context, GLint n, const GLuint *)
+{
+    return ValidateGenOrDelete(context, n);
+}
+
+bool ValidateGenOrDelete(Context *context, GLint n)
+{
+    if (n < 0)
+    {
+        context->recordError(Error(GL_INVALID_VALUE, "n < 0"));
+        return false;
+    }
+    return true;
 }
 
 }  // namespace gl

@@ -12,6 +12,7 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <array>
 
 #include "angle_gl.h"
 #include "angle_test_configs.h"
@@ -114,6 +115,15 @@ class ANGLETest : public ::testing::TestWithParam<angle::PlatformParameters>
                          const std::string &positionAttribName,
                          GLfloat positionAttribZ,
                          GLfloat positionAttribXYScale);
+    static std::array<Vector3, 6> GetQuadVertices();
+    void drawIndexedQuad(GLuint program,
+                         const std::string &positionAttribName,
+                         GLfloat positionAttribZ);
+    void drawIndexedQuad(GLuint program,
+                         const std::string &positionAttribName,
+                         GLfloat positionAttribZ,
+                         GLfloat positionAttribXYScale);
+
     static GLuint compileShader(GLenum type, const std::string &source);
     static bool extensionEnabled(const std::string &extName);
     static bool eglClientExtensionEnabled(const std::string &extName);
@@ -154,6 +164,9 @@ class ANGLETest : public ::testing::TestWithParam<angle::PlatformParameters>
 
     bool mIgnoreD3D11SDKLayersWarnings;
 
+    // Used for indexed quad rendering
+    GLuint mQuadVertexBuffer;
+
     static OSWindow *mOSWindow;
 };
 
@@ -174,6 +187,7 @@ bool IsD3D11_FL93();
 bool IsD3D9();
 // Is D3D9 or SM9_3 renderer.
 bool IsD3DSM3();
+bool IsLinux();
 bool IsOSX();
 
 #endif  // ANGLE_TESTS_ANGLE_TEST_H_

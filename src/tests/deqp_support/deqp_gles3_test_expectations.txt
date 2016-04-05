@@ -50,24 +50,16 @@
 // Windows and Linux failures
 
 1101 WIN LINUX : dEQP-GLES3.functional.lifetime.delete_active.transform_feedback = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.buffer.draw_buffers = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.buffer.renderbuffer_storage_multisample = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.texture.compressedtexsubimage2d = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.texture.compressedtexsubimage2d_invalid_size = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.texture.compressedtexsubimage3d = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.texture.compressedtexsubimage3d_invalid_buffer_target = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.shader.link_program = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.shader.use_program = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.shader.sampler_parameterfv = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.shader.gen_transform_feedbacks = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.shader.delete_transform_feedbacks = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.fragment.begin_query = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.vertex_array.vertex_attrib_i_pointer = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.vertex_array.draw_range_elements = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.vertex_array.draw_range_elements_invalid_program = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.vertex_array.draw_range_elements_incomplete_primitive = FAIL
 1101 WIN LINUX : dEQP-GLES3.functional.negative_api.state.get_buffer_pointerv = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.negative_api.state.get_framebuffer_attachment_parameteriv = FAIL
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_vertex.scalar = FAIL
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_vertex.vec2 = FAIL
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_vertex.vec3 = FAIL
@@ -76,17 +68,6 @@
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_fragment.vec2 = FAIL
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_fragment.vec3 = FAIL
 1093 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_functions.precision.tanh.highp_fragment.vec4 = FAIL
-1094 WIN LINUX : dEQP-GLES3.functional.shaders.builtin_variable.vertex_id = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.fbo.framebuffer_attachment_x_size_rbo = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.shader.program_attached_shaders = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.sampler_binding_getboolean = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.sampler_binding_getinteger = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.sampler_binding_getinteger64 = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.sampler_binding_getfloat = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.read_buffer_getboolean = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.read_buffer_getinteger = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.read_buffer_getinteger64 = FAIL
-1101 WIN LINUX : dEQP-GLES3.functional.state_query.integers.read_buffer_getfloat = FAIL
 1095 WIN LINUX : dEQP-GLES3.functional.texture.mipmap.2d.projected.nearest_nearest_clamp = FAIL
 1095 WIN LINUX : dEQP-GLES3.functional.texture.mipmap.2d.projected.nearest_nearest_repeat = FAIL
 1095 WIN LINUX : dEQP-GLES3.functional.texture.mipmap.2d.projected.nearest_nearest_mirror = FAIL
@@ -579,21 +560,19 @@
 1098 WIN : dEQP-GLES3.functional.uniform_api.random.81 = FAIL
 1098 WIN : dEQP-GLES3.functional.uniform_api.random.83 = FAIL
 1098 WIN : dEQP-GLES3.functional.uniform_api.random.87 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.bind_hole.mat2 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.bind_hole.mat2x2 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.layout_hole.mat2 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.layout_hole.mat2x2 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.mixed_hole.mat2 = FAIL
-1099 WIN : dEQP-GLES3.functional.attribute_location.mixed_hole.mat2x2 = FAIL
 1101 WIN : dEQP-GLES3.functional.polygon_offset.fixed16_render_with_units = FAIL
 1101 WIN : dEQP-GLES3.functional.polygon_offset.fixed24_render_with_units = FAIL
 1101 WIN : dEQP-GLES3.functional.lifetime.attach.deleted_input.buffer_vertex_array = FAIL
 
 // Linux only failures
 
+// UBO tests trigger crashes when getting the program info log, skip them until this is fixed.
+1323 LINUX : dEQP-GLES3.functional.ubo.* = SKIP
+
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.conversion.* = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.color.repeated_clear.blit.* = FAIL
-1323 LINUX : dEQP-GLES3.functional.ubo.* = FAIL
+1323 LINUX : dEQP-GLES3.functional.shaders.switch.conditional_fall_through_* = FAIL
+
 1323 LINUX : dEQP-GLES3.functional.default_vertex_attrib.int.vertex_attribi_4i = FAIL
 1323 LINUX : dEQP-GLES3.functional.default_vertex_attrib.int.vertex_attribi_4iv = FAIL
 1323 LINUX : dEQP-GLES3.functional.default_vertex_attrib.ivec2.vertex_attribi_4i = FAIL
@@ -649,6 +628,7 @@
 1323 LINUX : dEQP-GLES3.functional.draw.random.210 = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8 = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8_nearest_scale_blit_from_default = FAIL
+1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8_linear_out_of_bounds_blit_from_default = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8_linear_out_of_bounds_blit_to_default = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8_linear_scale_blit_from_default = FAIL
 1323 LINUX : dEQP-GLES3.functional.fbo.blit.default_framebuffer.srgb8_alpha8_linear_scale_blit_to_default = FAIL
@@ -690,6 +670,7 @@
 1323 LINUX : dEQP-GLES3.functional.shaders.functions.array_arguments.copy_global_inout_on_call_vertex = FAIL
 1323 LINUX : dEQP-GLES3.functional.shaders.invariance.highp.common_subexpression_1 = FAIL
 1323 LINUX : dEQP-GLES3.functional.shaders.invariance.mediump.common_subexpression_1 = FAIL
+1323 LINUX : dEQP-GLES3.functional.shaders.linkage.varying.rules.differing_interpolation_2 = FAIL
 1323 LINUX : dEQP-GLES3.functional.shaders.switch.conditional_fall_through_2_dynamic_fragment = FAIL
 1323 LINUX : dEQP-GLES3.functional.shaders.switch.conditional_fall_through_dynamic_fragment = FAIL
 1323 LINUX : dEQP-GLES3.functional.shaders.switch.conditional_fall_through_dynamic_vertex = FAIL

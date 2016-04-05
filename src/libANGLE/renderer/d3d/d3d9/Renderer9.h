@@ -134,7 +134,7 @@ class Renderer9 : public RendererD3D
                                GLenum type,
                                TranslatedIndexData *indexInfo) override;
 
-    void applyTransformFeedbackBuffers(const gl::State &state) override;
+    gl::Error applyTransformFeedbackBuffers(const gl::State &state) override;
 
     gl::Error clear(const ClearParameters &clearParams,
                     const gl::FramebufferAttachment *colorBuffer,
@@ -237,6 +237,9 @@ class Renderer9 : public RendererD3D
     // Transform Feedback creation
     virtual TransformFeedbackImpl* createTransformFeedback();
 
+    // Stream Creation
+    StreamImpl *createStream(const egl::AttributeMap &attribs) override;
+
     // Buffer-to-texture and Texture-to-buffer copies
     virtual bool supportsFastCopyBufferToTexture(GLenum internalFormat) const;
     virtual gl::Error fastCopyBufferToTexture(const gl::PixelUnpackState &unpack, unsigned int offset, RenderTargetD3D *destRenderTarget,
@@ -272,6 +275,7 @@ class Renderer9 : public RendererD3D
   private:
     gl::Error drawArraysImpl(const gl::Data &data,
                              GLenum mode,
+                             GLint startVertex,
                              GLsizei count,
                              GLsizei instances) override;
     gl::Error drawElementsImpl(const gl::Data &data,
@@ -393,6 +397,7 @@ class Renderer9 : public RendererD3D
     UINT mMaxNullColorbufferLRU;
 
     DeviceD3D *mEGLDevice;
+    std::vector<TranslatedAttribute> mTranslatedAttribCache;
 };
 
 }

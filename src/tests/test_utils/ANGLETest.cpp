@@ -65,7 +65,11 @@ std::ostream &operator<<(std::ostream &ostream, const GLColor &color)
 }  // namespace angle
 
 ANGLETest::ANGLETest()
-    : mEGLWindow(nullptr), mWidth(16), mHeight(16), mIgnoreD3D11SDKLayersWarnings(false)
+    : mEGLWindow(nullptr),
+      mWidth(16),
+      mHeight(16),
+      mIgnoreD3D11SDKLayersWarnings(false),
+      mQuadVertexBuffer(0)
 {
     mEGLWindow =
         new EGLWindow(GetParam().majorVersion, GetParam().minorVersion, GetParam().eglParameters);
@@ -73,6 +77,10 @@ ANGLETest::ANGLETest()
 
 ANGLETest::~ANGLETest()
 {
+    if (mQuadVertexBuffer)
+    {
+        glDeleteBuffers(1, &mQuadVertexBuffer);
+    }
     SafeDelete(mEGLWindow);
 }
 
@@ -146,6 +154,19 @@ void ANGLETest::swapBuffers()
     }
 }
 
+// static
+std::array<Vector3, 6> ANGLETest::GetQuadVertices()
+{
+    std::array<Vector3, 6> vertices;
+    vertices[0] = Vector3(-1.0f, 1.0f, 0.5f);
+    vertices[1] = Vector3(-1.0f, -1.0f, 0.5f);
+    vertices[2] = Vector3(1.0f, -1.0f, 0.5f);
+    vertices[3] = Vector3(-1.0f, 1.0f, 0.5f);
+    vertices[4] = Vector3(1.0f, -1.0f, 0.5f);
+    vertices[5] = Vector3(1.0f, 1.0f, 0.5f);
+    return vertices;
+}
+
 void ANGLETest::drawQuad(GLuint program,
                          const std::string &positionAttribName,
                          GLfloat positionAttribZ)
@@ -158,24 +179,83 @@ void ANGLETest::drawQuad(GLuint program,
                          GLfloat positionAttribZ,
                          GLfloat positionAttribXYScale)
 {
+    GLint previousProgram = 0;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &previousProgram);
+    if (previousProgram != static_cast<GLint>(program))
+    {
+        glUseProgram(program);
+    }
+
+    GLint positionLocation = glGetAttribLocation(program, positionAttribName.c_str());
+
+    auto quadVertices = GetQuadVertices();
+    for (Vector3 &vertex : quadVertices)
+    {
+        vertex.x *= positionAttribXYScale;
+        vertex.y *= positionAttribXYScale;
+        vertex.z = positionAttribZ;
+    }
+
+    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, quadVertices.data());
+    glEnableVertexAttribArray(positionLocation);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glDisableVertexAttribArray(positionLocation);
+    glVertexAttribPointer(positionLocation, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    if (previousProgram != static_cast<GLint>(program))
+    {
+        glUseProgram(previousProgram);
+    }
+}
+
+void ANGLETest::drawIndexedQuad(GLuint program,
+                                const std::string &positionAttribName,
+                                GLfloat positionAttribZ)
+{
+    drawIndexedQuad(program, positionAttribName, positionAttribZ, 1.0f);
+}
+
+void ANGLETest::drawIndexedQuad(GLuint program,
+                                const std::string &positionAttribName,
+                                GLfloat positionAttribZ,
+                                GLfloat positionAttribXYScale)
+{
     GLint positionLocation = glGetAttribLocation(program, positionAttribName.c_str());
 
     glUseProgram(program);
 
-    const GLfloat vertices[] = {
-        -1.0f * positionAttribXYScale,  1.0f * positionAttribXYScale, positionAttribZ,
-        -1.0f * positionAttribXYScale, -1.0f * positionAttribXYScale, positionAttribZ,
-         1.0f * positionAttribXYScale, -1.0f * positionAttribXYScale, positionAttribZ,
+    GLuint prevBinding = 0;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint *>(&prevBinding));
 
-        -1.0f * positionAttribXYScale,  1.0f * positionAttribXYScale, positionAttribZ,
-         1.0f * positionAttribXYScale, -1.0f * positionAttribXYScale, positionAttribZ,
-         1.0f * positionAttribXYScale,  1.0f * positionAttribXYScale, positionAttribZ,
+    if (mQuadVertexBuffer == 0)
+    {
+        glGenBuffers(1, &mQuadVertexBuffer);
+        auto quadVertices = GetQuadVertices();
+        for (Vector3 &vertex : quadVertices)
+        {
+            vertex.x *= positionAttribXYScale;
+            vertex.y *= positionAttribXYScale;
+            vertex.z = positionAttribZ;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, mQuadVertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3 * 4, quadVertices.data(), GL_STATIC_DRAW);
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, mQuadVertexBuffer);
+    }
+
+    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(positionLocation);
+    glBindBuffer(GL_ARRAY_BUFFER, prevBinding);
+
+    const GLushort indices[] = {
+        0, 1, 2, 0, 2, 3,
     };
 
-    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-    glEnableVertexAttribArray(positionLocation);
-
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
     glDisableVertexAttribArray(positionLocation);
     glVertexAttribPointer(positionLocation, 4, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -475,9 +555,18 @@ bool IsD3DSM3()
     return IsD3D9() || IsD3D11_FL93();
 }
 
+bool IsLinux()
+{
+#if defined(ANGLE_PLATFORM_LINUX)
+    return true;
+#else
+    return false;
+#endif
+}
+
 bool IsOSX()
 {
-#if defined(__APPLE__)
+#if defined(ANGLE_PLATFORM_APPLE)
     return true;
 #else
     return false;

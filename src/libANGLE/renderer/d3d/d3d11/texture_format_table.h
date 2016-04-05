@@ -12,13 +12,15 @@
 
 #include <map>
 
+#include "common/angleutils.h"
 #include "common/platform.h"
 #include "libANGLE/renderer/d3d/formatutilsD3D.h"
-#include "libANGLE/renderer/d3d/d3d11/Renderer11.h"
 #include "libANGLE/renderer/d3d/d3d11/texture_format_table_autogen.h"
 
 namespace rx
 {
+
+struct Renderer11DeviceCaps;
 
 namespace d3d11
 {
@@ -44,8 +46,10 @@ struct ANGLEFormatSet
                    DXGI_FORMAT srvFormat,
                    DXGI_FORMAT rtvFormat,
                    DXGI_FORMAT dsvFormat,
+                   DXGI_FORMAT blitSRVFormat,
                    ANGLEFormat swizzleFormat,
-                   MipGenerationFunction mipGenerationFunction);
+                   MipGenerationFunction mipGenerationFunction,
+                   ColorReadFunction colorReadFunction);
     ANGLEFormatSet(const ANGLEFormatSet &) = default;
     ANGLEFormatSet &operator=(const ANGLEFormatSet &) = default;
 
@@ -60,9 +64,12 @@ struct ANGLEFormatSet
     DXGI_FORMAT rtvFormat;
     DXGI_FORMAT dsvFormat;
 
+    DXGI_FORMAT blitSRVFormat;
+
     ANGLEFormat swizzleFormat;
 
     MipGenerationFunction mipGenerationFunction;
+    ColorReadFunction colorReadFunction;
 };
 
 struct TextureFormat : public angle::NonCopyable
@@ -71,8 +78,8 @@ struct TextureFormat : public angle::NonCopyable
                   const ANGLEFormat angleFormat,
                   InitializeTextureDataFunction internalFormatInitializer);
 
-    ANGLEFormatSet formatSet;
-    ANGLEFormatSet swizzleFormatSet;
+    const ANGLEFormatSet *formatSet;
+    const ANGLEFormatSet *swizzleFormatSet;
 
     InitializeTextureDataFunction dataInitializerFunction;
     typedef std::map<GLenum, LoadImageFunctionInfo> LoadFunctionMap;

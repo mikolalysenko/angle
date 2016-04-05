@@ -154,6 +154,8 @@ void Renderer9::release()
 {
     RendererD3D::cleanup();
 
+    mTranslatedAttribCache.clear();
+
     releaseDeviceResources();
 
     SafeDelete(mEGLDevice);
@@ -364,7 +366,6 @@ void Renderer9::initializeDevice()
     mVertexDataManager = new VertexDataManager(this);
     mIndexDataManager = new IndexDataManager(this, getRendererClass());
 
-    // TODO(jmadill): use context caps, and place in common D3D location
     mTranslatedAttribCache.resize(getRendererCaps().maxVertexAttributes);
 }
 
@@ -768,6 +769,13 @@ FenceSyncImpl *Renderer9::createFenceSync()
 TransformFeedbackImpl* Renderer9::createTransformFeedback()
 {
     return new TransformFeedbackD3D();
+}
+
+StreamImpl *Renderer9::createStream(const egl::AttributeMap &attribs)
+{
+    // Streams are not supported under D3D9
+    UNREACHABLE();
+    return nullptr;
 }
 
 bool Renderer9::supportsFastCopyBufferToTexture(GLenum internalFormat) const
@@ -1184,7 +1192,8 @@ gl::Error Renderer9::applyVertexBuffer(const gl::State &state,
         return error;
     }
 
-    return mVertexDeclarationCache.applyDeclaration(mDevice, mTranslatedAttribCache, state.getProgram(), instances, &mRepeatDraw);
+    return mVertexDeclarationCache.applyDeclaration(
+        mDevice, mTranslatedAttribCache, state.getProgram(), first, instances, &mRepeatDraw);
 }
 
 // Applies the indices and element array bindings to the Direct3D 9 device
@@ -1218,13 +1227,15 @@ gl::Error Renderer9::applyIndexBuffer(const gl::Data &data,
     return gl::Error(GL_NO_ERROR);
 }
 
-void Renderer9::applyTransformFeedbackBuffers(const gl::State& state)
+gl::Error Renderer9::applyTransformFeedbackBuffers(const gl::State &state)
 {
     ASSERT(!state.isTransformFeedbackActiveUnpaused());
+    return gl::Error(GL_NO_ERROR);
 }
 
 gl::Error Renderer9::drawArraysImpl(const gl::Data &data,
                                     GLenum mode,
+                                    GLint startVertex,
                                     GLsizei count,
                                     GLsizei instances)
 {

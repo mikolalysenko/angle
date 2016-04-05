@@ -24,90 +24,6 @@ namespace rx
 namespace d3d11
 {
 
-typedef std::map<DXGI_FORMAT, GLenum> DXGIToESFormatMap;
-
-inline void AddDXGIToESEntry(DXGIToESFormatMap *map, DXGI_FORMAT key, GLenum value)
-{
-    map->insert(std::make_pair(key, value));
-}
-
-static DXGIToESFormatMap BuildDXGIToESFormatMap()
-{
-    DXGIToESFormatMap map;
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_UNKNOWN,                  GL_NONE);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_A8_UNORM,                 GL_ALPHA8_EXT);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8_UNORM,                 GL_R8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8_UNORM,               GL_RG8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8B8A8_UNORM,           GL_RGBA8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,      GL_SRGB8_ALPHA8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_B8G8R8A8_UNORM,           GL_BGRA8_EXT);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8_SNORM,                 GL_R8_SNORM);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8_SNORM,               GL_RG8_SNORM);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8B8A8_SNORM,           GL_RGBA8_SNORM);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8_UINT,                  GL_R8UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16_UINT,                 GL_R16UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32_UINT,                 GL_R32UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8_UINT,                GL_RG8UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16_UINT,              GL_RG16UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32_UINT,              GL_RG32UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32_UINT,           GL_RGB32UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8B8A8_UINT,            GL_RGBA8UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16B16A16_UINT,        GL_RGBA16UI);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32A32_UINT,        GL_RGBA32UI);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8_SINT,                  GL_R8I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16_SINT,                 GL_R16I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32_SINT,                 GL_R32I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8_SINT,                GL_RG8I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16_SINT,              GL_RG16I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32_SINT,              GL_RG32I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32_SINT,           GL_RGB32I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R8G8B8A8_SINT,            GL_RGBA8I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16B16A16_SINT,        GL_RGBA16I);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32A32_SINT,        GL_RGBA32I);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R10G10B10A2_UNORM,        GL_RGB10_A2);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R10G10B10A2_UINT,         GL_RGB10_A2UI);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16_FLOAT,                GL_R16F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16_FLOAT,             GL_RG16F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16G16B16A16_FLOAT,       GL_RGBA16F);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32_FLOAT,                GL_R32F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32_FLOAT,             GL_RG32F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32_FLOAT,          GL_RGB32F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G32B32A32_FLOAT,       GL_RGBA32F);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R9G9B9E5_SHAREDEXP,       GL_RGB9_E5);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R11G11B10_FLOAT,          GL_R11F_G11F_B10F);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16_TYPELESS,             GL_DEPTH_COMPONENT16);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R16_UNORM,                GL_DEPTH_COMPONENT16);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_D16_UNORM,                GL_DEPTH_COMPONENT16);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R24G8_TYPELESS,           GL_DEPTH24_STENCIL8_OES);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R24_UNORM_X8_TYPELESS,    GL_DEPTH24_STENCIL8_OES);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_D24_UNORM_S8_UINT,        GL_DEPTH24_STENCIL8_OES);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32G8X24_TYPELESS,        GL_DEPTH32F_STENCIL8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, GL_DEPTH32F_STENCIL8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_D32_FLOAT_S8X24_UINT,     GL_DEPTH32F_STENCIL8);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_R32_TYPELESS,             GL_DEPTH_COMPONENT32F);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_D32_FLOAT,                GL_DEPTH_COMPONENT32F);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_BC1_UNORM,                GL_COMPRESSED_RGBA_S3TC_DXT1_EXT);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_BC2_UNORM,                GL_COMPRESSED_RGBA_S3TC_DXT3_ANGLE);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_BC3_UNORM,                GL_COMPRESSED_RGBA_S3TC_DXT5_ANGLE);
-
-    AddDXGIToESEntry(&map, DXGI_FORMAT_B5G6R5_UNORM,             GL_RGB565);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_B5G5R5A1_UNORM,           GL_RGB5_A1);
-    AddDXGIToESEntry(&map, DXGI_FORMAT_B4G4R4A4_UNORM,           GL_RGBA4);
-
-    return map;
-}
-
 struct D3D11FastCopyFormat
 {
     GLenum destFormat;
@@ -167,6 +83,7 @@ static ColorFormatInfoMap BuildColorFormatInfoMap()
 {
     ColorFormatInfoMap map;
 
+    // clang-format off
     //                             | DXGI format                         | R | G | B | A | S |
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_A8_UNORM,                  0,  0,  0,  8,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8_UNORM,                  8,  0,  0,  0,  0);
@@ -174,10 +91,16 @@ static ColorFormatInfoMap BuildColorFormatInfoMap()
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8B8A8_UNORM,            8,  8,  8,  8,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,       8,  8,  8,  8,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_B8G8R8A8_UNORM,            8,  8,  8,  8,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16_UNORM,                16,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16_UNORM,             16, 16,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16B16A16_UNORM,       16, 16, 16, 16,  0);
 
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8_SNORM,                  8,  0,  0,  0,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8_SNORM,                8,  8,  0,  0,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8B8A8_SNORM,            8,  8,  8,  8,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16_SNORM,                16,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16_SNORM,             16, 16,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16B16A16_SNORM,       16, 16, 16, 16,  0);
 
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8_UINT,                   8,  0,  0,  0,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16_UINT,                 16,  0,  0,  0,  0);
@@ -201,6 +124,7 @@ static ColorFormatInfoMap BuildColorFormatInfoMap()
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16B16A16_SINT,        16, 16, 16, 16,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32G32B32A32_SINT,        32, 32, 32, 32,  0);
 
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R10G10B10A2_TYPELESS,     10, 10, 10,  2,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R10G10B10A2_UNORM,        10, 10, 10,  2,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R10G10B10A2_UINT,         10, 10, 10,  2,  0);
 
@@ -220,28 +144,43 @@ static ColorFormatInfoMap BuildColorFormatInfoMap()
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_B4G4R4A4_UNORM,            4,  4,  4,  4,  0);
     InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_B5G5R5A1_UNORM,            5,  5,  5,  1,  0);
 
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8_TYPELESS,               8,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16_TYPELESS,             16,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32_TYPELESS,             32,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8_TYPELESS,             8,  8,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16_TYPELESS,          16, 16,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32G32_TYPELESS,          32, 32,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32G32B32_TYPELESS,       32, 32, 32,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R8G8B8A8_TYPELESS,         8,  8,  8,  8,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R16G16B16A16_TYPELESS,    16, 16, 16, 16,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32G32B32A32_TYPELESS,    32, 32, 32, 32,  0);
+
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R24G8_TYPELESS,           24,  8,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R24_UNORM_X8_TYPELESS,    24,  0,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32G8X24_TYPELESS,        32,  8,  0,  0,  0);
+    InsertDXGIColorFormatInfo(&map, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, 32,  0,  0,  0,  0);
+    // clang-format on
+
     return map;
 }
 
 struct DXGIDepthStencilInfo
 {
     unsigned int depthBits;
-    unsigned int depthOffset;
     unsigned int stencilBits;
-    unsigned int stencilOffset;
 };
 
 typedef std::map<DXGI_FORMAT, DXGIDepthStencilInfo> DepthStencilInfoMap;
 typedef std::pair<DXGI_FORMAT, DXGIDepthStencilInfo> DepthStencilInfoPair;
 
-static inline void InsertDXGIDepthStencilInfo(DepthStencilInfoMap *map, DXGI_FORMAT format, unsigned int depthBits,
-                                              unsigned int depthOffset, unsigned int stencilBits, unsigned int stencilOffset)
+static inline void InsertDXGIDepthStencilInfo(DepthStencilInfoMap *map,
+                                              DXGI_FORMAT format,
+                                              unsigned int depthBits,
+                                              unsigned int stencilBits)
 {
     DXGIDepthStencilInfo info;
     info.depthBits = depthBits;
-    info.depthOffset = depthOffset;
     info.stencilBits = stencilBits;
-    info.stencilOffset = stencilOffset;
 
     map->insert(std::make_pair(format, info));
 }
@@ -250,21 +189,12 @@ static DepthStencilInfoMap BuildDepthStencilInfoMap()
 {
     DepthStencilInfoMap map;
 
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R16_TYPELESS,             16, 0, 0,  0);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R16_UNORM,                16, 0, 0,  0);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D16_UNORM,                16, 0, 0,  0);
-
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R24G8_TYPELESS,           24, 0, 8, 24);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R24_UNORM_X8_TYPELESS,    24, 0, 8, 24);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D24_UNORM_S8_UINT,        24, 0, 8, 24);
-
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R32_TYPELESS,             32, 0, 0,  0);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R32_FLOAT,                32, 0, 0,  0);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D32_FLOAT,                32, 0, 0,  0);
-
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R32G8X24_TYPELESS,        32, 0, 8, 32);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, 32, 0, 8, 32);
-    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D32_FLOAT_S8X24_UINT,     32, 0, 8, 32);
+    // clang-format off
+    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D16_UNORM,                16, 0);
+    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D24_UNORM_S8_UINT,        24, 8);
+    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D32_FLOAT,                32, 0);
+    InsertDXGIDepthStencilInfo(&map, DXGI_FORMAT_D32_FLOAT_S8X24_UINT,     32, 8);
+    // clang-format on
 
     return map;
 }
@@ -278,12 +208,8 @@ DXGIFormat::DXGIFormat()
       alphaBits(0),
       sharedBits(0),
       depthBits(0),
-      depthOffset(0),
       stencilBits(0),
-      stencilOffset(0),
-      internalFormat(GL_NONE),
       componentType(GL_NONE),
-      colorReadFunction(NULL),
       fastCopyFunctions(),
       nativeMipmapSupport(NULL)
 {
@@ -309,7 +235,6 @@ ColorCopyFunction DXGIFormat::getFastCopyFunction(GLenum format, GLenum type) co
 void AddDXGIFormat(DXGIFormatInfoMap *map,
                    DXGI_FORMAT dxgiFormat,
                    GLenum componentType,
-                   ColorReadFunction readFunc,
                    NativeMipmapGenerationSupportFunction nativeMipmapSupport)
 {
     DXGIFormat info;
@@ -332,18 +257,10 @@ void AddDXGIFormat(DXGIFormatInfoMap *map,
     {
         const DXGIDepthStencilInfo &dsInfo = dsInfoIter->second;
         info.depthBits = dsInfo.depthBits;
-        info.depthOffset = dsInfo.depthOffset;
         info.stencilBits = dsInfo.stencilBits;
-        info.stencilOffset = dsInfo.stencilOffset;
     }
 
-    static const DXGIToESFormatMap dxgiToESMap = BuildDXGIToESFormatMap();
-    DXGIToESFormatMap::const_iterator dxgiToESIter = dxgiToESMap.find(dxgiFormat);
-    info.internalFormat = (dxgiToESIter != dxgiToESMap.end()) ? dxgiToESIter->second : GL_NONE;
-
     info.componentType = componentType;
-
-    info.colorReadFunction = readFunc;
 
     static const D3D11FastCopyMap fastCopyMap = BuildFastCopyMap();
     std::pair<D3D11FastCopyMap::const_iterator, D3D11FastCopyMap::const_iterator> fastCopyIter = fastCopyMap.equal_range(dxgiFormat);
@@ -364,85 +281,96 @@ static DXGIFormatInfoMap BuildDXGIFormatInfoMap()
 
     // clang-format off
     //                | DXGI format                         | Component Type        | Color read function              | Native mipmap function
-    AddDXGIFormat(&map, DXGI_FORMAT_UNKNOWN,                  GL_NONE,                nullptr,                           NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_UNKNOWN,                  GL_NONE,                NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_A8_UNORM,                 GL_UNSIGNED_NORMALIZED, ReadColor<A8, GLfloat>,            RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8_UNORM,                 GL_UNSIGNED_NORMALIZED, ReadColor<R8, GLfloat>,            RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_UNORM,               GL_UNSIGNED_NORMALIZED, ReadColor<R8G8, GLfloat>,          RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UNORM,           GL_UNSIGNED_NORMALIZED, ReadColor<R8G8B8A8, GLfloat>,      RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,      GL_UNSIGNED_NORMALIZED, ReadColor<R8G8B8A8, GLfloat>,      RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
-    AddDXGIFormat(&map, DXGI_FORMAT_B8G8R8A8_UNORM,           GL_UNSIGNED_NORMALIZED, ReadColor<B8G8R8A8, GLfloat>,      RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
+    AddDXGIFormat(&map, DXGI_FORMAT_A8_UNORM,                 GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8_UNORM,                 GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_UNORM,                GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_UNORM,               GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_UNORM,             GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UNORM,           GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,      GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
+    AddDXGIFormat(&map, DXGI_FORMAT_B8G8R8A8_UNORM,           GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_UNORM,       GL_UNSIGNED_NORMALIZED, NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R8_SNORM,                 GL_SIGNED_NORMALIZED,   ReadColor<R8S, GLfloat>      ,     RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_SNORM,               GL_SIGNED_NORMALIZED,   ReadColor<R8G8S, GLfloat>    ,     RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_SNORM,           GL_SIGNED_NORMALIZED,   ReadColor<R8G8B8A8S, GLfloat>,     RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8_SNORM,                 GL_SIGNED_NORMALIZED,   RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_SNORM,                GL_SIGNED_NORMALIZED,   NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_SNORM,               GL_SIGNED_NORMALIZED,   RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_SNORM,             GL_SIGNED_NORMALIZED,   NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_SNORM,           GL_SIGNED_NORMALIZED,   RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_SNORM,       GL_SIGNED_NORMALIZED,   NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R8_UINT,                  GL_UNSIGNED_INT,        ReadColor<R8, GLuint>,             NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_UINT,                 GL_UNSIGNED_INT,        ReadColor<R16, GLuint>,            NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32_UINT,                 GL_UNSIGNED_INT,        ReadColor<R32, GLuint>,            NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_UINT,                GL_UNSIGNED_INT,        ReadColor<R8G8, GLuint>,           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_UINT,              GL_UNSIGNED_INT,        ReadColor<R16G16, GLuint>,         NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_UINT,              GL_UNSIGNED_INT,        ReadColor<R32G32, GLuint>,         NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_UINT,           GL_UNSIGNED_INT,        ReadColor<R32G32B32, GLuint>,      NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UINT,            GL_UNSIGNED_INT,        ReadColor<R8G8B8A8, GLuint>,       NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_UINT,        GL_UNSIGNED_INT,        ReadColor<R16G16B16A16, GLuint>,   NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_UINT,        GL_UNSIGNED_INT,        ReadColor<R32G32B32A32, GLuint>,   NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8_UINT,                  GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_UINT,                 GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32_UINT,                 GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_UINT,                GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_UINT,              GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_UINT,              GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_UINT,           GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_UINT,            GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_UINT,        GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_UINT,        GL_UNSIGNED_INT,        NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R8_SINT,                  GL_INT,                 ReadColor<R8S, GLint>,             NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_SINT,                 GL_INT,                 ReadColor<R16S, GLint>,            NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32_SINT,                 GL_INT,                 ReadColor<R32S, GLint>,            NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_SINT,                GL_INT,                 ReadColor<R8G8S, GLint>,           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_SINT,              GL_INT,                 ReadColor<R16G16S, GLint>,         NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_SINT,              GL_INT,                 ReadColor<R32G32S, GLint>,         NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_SINT,           GL_INT,                 ReadColor<R32G32B32S, GLint>,      NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_SINT,            GL_INT,                 ReadColor<R8G8B8A8S, GLint>,       NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_SINT,        GL_INT,                 ReadColor<R16G16B16A16S, GLint>,   NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_SINT,        GL_INT,                 ReadColor<R32G32B32A32S, GLint>,   NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8_SINT,                  GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_SINT,                 GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32_SINT,                 GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_SINT,                GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_SINT,              GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_SINT,              GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_SINT,           GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_SINT,            GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_SINT,        GL_INT,                 NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_SINT,        GL_INT,                 NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R10G10B10A2_UNORM,        GL_UNSIGNED_NORMALIZED, ReadColor<R10G10B10A2, GLfloat>,   RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R10G10B10A2_UINT,         GL_UNSIGNED_INT,        ReadColor<R10G10B10A2, GLuint>,    NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R10G10B10A2_TYPELESS,     GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R10G10B10A2_UNORM,        GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R10G10B10A2_UINT,         GL_UNSIGNED_INT,        NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_FLOAT,                GL_FLOAT,               ReadColor<R16F, GLfloat>,          RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_FLOAT,             GL_FLOAT,               ReadColor<R16G16F, GLfloat>,       RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_FLOAT,       GL_FLOAT,               ReadColor<R16G16B16A16F, GLfloat>, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_FLOAT,                GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_FLOAT,             GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_FLOAT,       GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R32_FLOAT,                GL_FLOAT,               ReadColor<R32F, GLfloat>,          RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_FLOAT,             GL_FLOAT,               ReadColor<R32G32F, GLfloat>,       RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_FLOAT,          GL_FLOAT,               nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_FLOAT,       GL_FLOAT,               ReadColor<R32G32B32A32F, GLfloat>, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_3>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32_FLOAT,                GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_2>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_FLOAT,             GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_FLOAT,          GL_FLOAT,               NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_FLOAT,       GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_3>);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R9G9B9E5_SHAREDEXP,       GL_FLOAT,               ReadColor<R9G9B9E5, GLfloat>,      NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R11G11B10_FLOAT,          GL_FLOAT,               ReadColor<R11G11B10F, GLfloat>,    RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
+    AddDXGIFormat(&map, DXGI_FORMAT_R9G9B9E5_SHAREDEXP,       GL_FLOAT,               NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R11G11B10_FLOAT,          GL_FLOAT,               RequiresFeatureLevel<D3D_FEATURE_LEVEL_10_0>);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_TYPELESS,             GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_D16_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R24G8_TYPELESS,           GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R24_UNORM_X8_TYPELESS,    GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_D24_UNORM_S8_UINT,        GL_UNSIGNED_INT,        nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32G8X24_TYPELESS,        GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_D32_FLOAT_S8X24_UINT,     GL_UNSIGNED_INT,        nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R32_TYPELESS,             GL_NONE,                nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_D32_FLOAT,                GL_FLOAT,               nullptr,                           NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8_TYPELESS,              GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16_TYPELESS,             GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32_TYPELESS,             GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_TYPELESS,            GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_TYPELESS,          GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_TYPELESS,          GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8_TYPELESS,            GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_TYPELESS,          GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32_TYPELESS,          GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32_TYPELESS,       GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R8G8B8A8_TYPELESS,        GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_TYPELESS,    GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G32B32A32_TYPELESS,    GL_NONE,                NeverSupported);
 
-    AddDXGIFormat(&map, DXGI_FORMAT_BC1_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_BC2_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_BC3_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R24G8_TYPELESS,           GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R24_UNORM_X8_TYPELESS,    GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32G8X24_TYPELESS,        GL_NONE,                NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS, GL_NONE,                NeverSupported);
+
+    AddDXGIFormat(&map, DXGI_FORMAT_D16_UNORM,                GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_D24_UNORM_S8_UINT,        GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_D32_FLOAT_S8X24_UINT,     GL_UNSIGNED_INT,        NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_D32_FLOAT,                GL_FLOAT,               NeverSupported);
+
+    AddDXGIFormat(&map, DXGI_FORMAT_BC1_UNORM,                GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_BC2_UNORM,                GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_BC3_UNORM,                GL_UNSIGNED_NORMALIZED, NeverSupported);
 
     // B5G6R5 in D3D11 is treated the same as R5G6B5 in D3D9, so reuse the R5G6B5 functions used by the D3D9 renderer.
     // The same applies to B4G4R4A4 and B5G5R5A1 with A4R4G4B4 and A1R5G5B5 respectively.
-    AddDXGIFormat(&map, DXGI_FORMAT_B5G6R5_UNORM,             GL_UNSIGNED_NORMALIZED, ReadColor<R5G6B5, GLfloat>,        RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
-    AddDXGIFormat(&map, DXGI_FORMAT_B4G4R4A4_UNORM,           GL_UNSIGNED_NORMALIZED, ReadColor<A4R4G4B4, GLfloat>,      NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_B5G5R5A1_UNORM,           GL_UNSIGNED_NORMALIZED, ReadColor<A1R5G5B5, GLfloat>,      NeverSupported);
-
-    // Useful formats for vertex buffers
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_UNORM,                GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16_SNORM,                GL_SIGNED_NORMALIZED,   nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_UNORM,             GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16_SNORM,             GL_SIGNED_NORMALIZED,   nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_UNORM,       GL_UNSIGNED_NORMALIZED, nullptr,                           NeverSupported);
-    AddDXGIFormat(&map, DXGI_FORMAT_R16G16B16A16_SNORM,       GL_SIGNED_NORMALIZED,   nullptr,                           NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_B5G6R5_UNORM,             GL_UNSIGNED_NORMALIZED, RequiresFeatureLevel<D3D_FEATURE_LEVEL_9_1>);
+    AddDXGIFormat(&map, DXGI_FORMAT_B4G4R4A4_UNORM,           GL_UNSIGNED_NORMALIZED, NeverSupported);
+    AddDXGIFormat(&map, DXGI_FORMAT_B5G5R5A1_UNORM,           GL_UNSIGNED_NORMALIZED, NeverSupported);
     // clang-format on
 
     return map;
