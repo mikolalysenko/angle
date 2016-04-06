@@ -34,6 +34,7 @@
         [
             ['OS=="win"',
             {
+                'angle_gl_library_type%': 'shared_library',
                 'angle_enable_gl%': 1,
                 'angle_enable_d3d9%': 1,
                 'angle_enable_d3d11%': 1,
