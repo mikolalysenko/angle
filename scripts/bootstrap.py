@@ -17,11 +17,15 @@ def main():
   try:
     rc = subprocess.call(gclient_cmd, shell=True)
   except OSError:
-    print 'could not run "%s" via shell' % gclient_cmd
+    print('could not run "%s" via shell' % gclient_cmd)
+    sys.exit(1)
+  except Exception as e:
+    print(repr(e))
+    print('could not run "%s" via shell' % gclient_cmd)
     sys.exit(1)
 
   if rc:
-    print 'failed command: "%s"' % gclient_cmd
+    print('failed command: "%s"' % gclient_cmd)
     sys.exit(1)
 
   with open('.gclient') as gclient_file:
@@ -30,7 +34,7 @@ def main():
   with open('.gclient', 'w') as gclient_file:
     gclient_file.write(content.replace('change2dot', '.'))
 
-  print 'created .gclient'
+  print('created .gclient')
 
 if __name__ == '__main__':
   main()

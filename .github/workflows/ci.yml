@@ -1,0 +1,44 @@
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+name: ci
+on:
+  push:
+  #  branches: [ master ]
+  pull_request:
+    branches: [ master ]
+defaults:
+  run:
+    shell: bash  # Not pwsh on Windows to properly set the path
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 9  # Three versions of Node.js on three different OSes
+      matrix:  # Running 9 long-running tests uses a lot of resources!
+        node-version: [16.x, 18.x, 20.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:  # TODO: Remove the excludes and get the tests to pass
+          # Windows FAILS on all three versions of Node.js.
+          - os: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/setup-python@v4
+        with:  # This sets both python and python3 to the same version
+          python-version: 3.x
+      - run: python3 --version && python --version
+      - if: runner.os == 'Linux'
+        run: sudo apt-get install -y build-essential libglew-dev libglu1-mesa-dev libpci-dev libxi-dev pkg-config
+      # - run: npm ci || true
+      # - run: npm install || true
+      # - run: npm run build --if-present || true
+      # - run: npm test || true
+      - run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+      - run: echo "$(pwd)/depot_tools" >> $GITHUB_PATH
+      - run: gclient --version  # Does not actually show the version!
+      - run: git clone https://chromium.googlesource.com/angle/angle
+      - run: PATH="$(pwd)/depot_tools:$PATH" python3 scripts/bootstrap.py
+      - run: git clone https://github.com/nodejs/node-gyp  # Google's gyp runs legacy Python2
+      - run: gclient sync  # Windows fail because it seems to be running legacy Python2

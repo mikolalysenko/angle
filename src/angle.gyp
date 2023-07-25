@@ -21,7 +21,7 @@
         'angle_id_script': '<(angle_gen_path)/<(angle_id_script_base)',
         'angle_id_header_base': 'commit.h',
         'angle_id_header': '<(angle_gen_path)/id/<(angle_id_header_base)',
-        'angle_use_commit_id%': '<!(python <(angle_id_script_base) check ..)',
+        'angle_use_commit_id%': '<!(python3 <(angle_id_script_base) check ..)',
         'angle_enable_d3d9%': 0,
         'angle_enable_d3d11%': 0,
         'angle_enable_gl%': 0,
@@ -153,7 +153,7 @@
                             'msvs_cygwin_shell': 0,
                             'action':
                             [
-                                'python', '<(angle_id_script)', 'gen', '<(angle_path)', '<(angle_id_header)'
+                                'python3', '<(angle_id_script)', 'gen', '<(angle_path)', '<(angle_id_header)'
                             ],
                         },
                     ],
@@ -260,9 +260,9 @@
                             'action_name': 'ANGLE Post-Build Script',
                             'message': 'Running <(angle_post_build_script)...',
                             'msvs_cygwin_shell': 0,
-                            'inputs': [ '<(angle_post_build_script)', '<!@(["python", "<(angle_post_build_script)", "inputs", "<(angle_path)", "<(CONFIGURATION_NAME)", "$(PlatformName)", "<(PRODUCT_DIR)"])' ],
-                            'outputs': [ '<!@(python <(angle_post_build_script) outputs "<(angle_path)" "<(CONFIGURATION_NAME)" "$(PlatformName)" "<(PRODUCT_DIR)")' ],
-                            'action': ['python', '<(angle_post_build_script)', 'run', '<(angle_path)', '<(CONFIGURATION_NAME)', '$(PlatformName)', '<(PRODUCT_DIR)'],
+                            'inputs': [ '<(angle_post_build_script)', '<!@(["python3", "<(angle_post_build_script)", "inputs", "<(angle_path)", "<(CONFIGURATION_NAME)", "$(PlatformName)", "<(PRODUCT_DIR)"])' ],
+                            'outputs': [ '<!@(python3 <(angle_post_build_script) outputs "<(angle_path)" "<(CONFIGURATION_NAME)" "$(PlatformName)" "<(PRODUCT_DIR)")' ],
+                            'action': ['python3', '<(angle_post_build_script)', 'run', '<(angle_path)', '<(CONFIGURATION_NAME)', '$(PlatformName)', '<(PRODUCT_DIR)'],
                         },
                     ], #actions
                 },
